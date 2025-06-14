@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>智能小车控制系统</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -15,7 +15,9 @@
             primary: '#3B82F6',
             secondary: '#10B981',
             dark: '#1E293B',
-            light: '#F8FAFC'
+            light: '#F8FAFC',
+            tertiary: '#8B5CF6',
+            quaternary: '#EC4899'
           },
           fontFamily: {
             inter: ['Inter', 'sans-serif'],
@@ -31,32 +33,41 @@
         content-visibility: auto;
       }
       .btn-hover {
-        @apply transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+        @apply transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg;
+      }
+      .btn-active {
+        @apply transform scale-[0.98] shadow-md;
+      }
+      .card-shadow {
+        @apply shadow-md hover:shadow-xl transition-shadow duration-300;
+      }
+      .text-balance {
+        text-wrap: balance;
       }
     }
   </style>
 </head>
 <body class="bg-gradient-to-br from-light to-gray-100 min-h-screen font-inter text-dark">
-  <div class="container mx-auto px-4 py-12 max-w-4xl">
-    <header class="mb-12 text-center">
-      <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary mb-4">
-        智能小车控制中心
+  <div class="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+    <header class="mb-8 md:mb-12 text-center">
+      <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary mb-3">
+        智能小车教学体验中心
       </h1>
-      <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-        选择以下控制系统，体验不同算法的智能小车控制方案
+      <p class="text-gray-600 text-base md:text-lg max-w-2xl mx-auto text-balance">
+        选择以下界面，体验不同算法的智能小车控制方案
       </p>
     </header>
 
-    <main class="grid md:grid-cols-2 gap-8 content-center justify-items-center">
-      <!-- PD智能小车控制按钮 -->
-      <button onclick="openInNewWindow('page15.html')" class="w-full max-w-md cursor-pointer">
-        <div class="bg-white rounded-2xl shadow-md overflow-hidden btn-hover">
-          <div class="bg-primary/10 p-6">
-            <i class="fa fa-car text-primary text-4xl mb-4"></i>
-            <h2 class="text-xl font-bold text-primary">PD智能小车控制</h2>
-            <p class="text-gray-600 mt-2">基于比例-微分控制算法的智能小车系统</p>
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 content-center justify-items-center">
+      <!-- 智能体按钮 -->
+      <button onclick="openInNewWindow('page1.html')" class="w-full cursor-pointer touch-action-manipulation">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden btn-hover">
+          <div class="bg-primary/10 p-5 md:p-6">
+            <i class="fa fa-car text-primary text-3xl md:text-4xl mb-3"></i>
+            <h2 class="text-lg md:text-xl font-bold text-primary">智能小车助教智能体</h2>
+            <p class="text-gray-600 mt-2 text-sm md:text-base">一个助力智能小车知识学习与应用的智能体</p>
           </div>
-          <div class="p-4 bg-primary text-white text-center">
+          <div class="p-3 md:p-4 bg-primary text-white text-center">
             <span class="flex items-center justify-center">
               <span>进入系统</span>
               <i class="fa fa-arrow-right ml-2"></i>
@@ -66,14 +77,48 @@
       </button>
 
       <!-- PID智能小车控制按钮 -->
-      <button onclick="openInNewWindow('page2.html')" class="w-full max-w-md cursor-pointer">
-        <div class="bg-white rounded-2xl shadow-md overflow-hidden btn-hover">
-          <div class="bg-secondary/10 p-6">
-            <i class="fa fa-microchip text-secondary text-4xl mb-4"></i>
-            <h2 class="text-xl font-bold text-secondary">PID智能小车控制</h2>
-            <p class="text-gray-600 mt-2">基于比例-积分-微分控制算法的智能小车系统</p>
+      <button onclick="openInNewWindow('page2.html')" class="w-full cursor-pointer touch-action-manipulation">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden btn-hover">
+          <div class="bg-secondary/10 p-5 md:p-6">
+            <i class="fa fa-microchip text-secondary text-3xl md:text-4xl mb-3"></i>
+            <h2 class="text-lg md:text-xl font-bold text-secondary">PID智能小车控制</h2>
+            <p class="text-gray-600 mt-2 text-sm md:text-base">基于比例-积分-微分控制算法的智能小车系统</p>
           </div>
-          <div class="p-4 bg-secondary text-white text-center">
+          <div class="p-3 md:p-4 bg-secondary text-white text-center">
+            <span class="flex items-center justify-center">
+              <span>进入系统</span>
+              <i class="fa fa-arrow-right ml-2"></i>
+            </span>
+          </div>
+        </div>
+      </button>
+
+      <!-- 新增的第三个模块按钮 -->
+      <button onclick="openInNewWindow('page3.html')" class="w-full cursor-pointer touch-action-manipulation">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden btn-hover">
+          <div class="bg-tertiary/10 p-5 md:p-6">
+            <i class="fa fa-line-chart text-tertiary text-3xl md:text-4xl mb-3"></i>
+            <h2 class="text-lg md:text-xl font-bold text-tertiary">高级路径规划</h2>
+            <p class="text-gray-600 mt-2 text-sm md:text-base">基于多种智能算法的智能小车路径规划系统</p>
+          </div>
+          <div class="p-3 md:p-4 bg-tertiary text-white text-center">
+            <span class="flex items-center justify-center">
+              <span>进入系统</span>
+              <i class="fa fa-arrow-right ml-2"></i>
+            </span>
+          </div>
+        </div>
+      </button>
+
+      <!-- 新增的第四个模块按钮 -->
+      <button onclick="openInNewWindow('page4.html')" class="w-full cursor-pointer touch-action-manipulation">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden btn-hover">
+          <div class="bg-quaternary/10 p-5 md:p-6">
+            <i class="fa fa-eye text-quaternary text-3xl md:text-4xl mb-3"></i>
+            <h2 class="text-lg md:text-xl font-bold text-quaternary">智能小车教学视频</h2>
+            <p class="text-gray-600 mt-2 text-sm md:text-base">关于智能小车的知识点教学视频</p>
+          </div>
+          <div class="p-3 md:p-4 bg-quaternary text-white text-center">
             <span class="flex items-center justify-center">
               <span>进入系统</span>
               <i class="fa fa-arrow-right ml-2"></i>
@@ -83,7 +128,7 @@
       </button>
     </main>
 
-    <footer class="mt-16 text-center text-gray-500">
+    <footer class="mt-12 md:mt-16 text-center text-gray-500 text-sm">
       <p>© 2025 智能小车控制实验室 | 版权所有</p>
     </footer>
   </div>
@@ -105,6 +150,19 @@
           btn.style.opacity = '1';
           btn.style.transform = 'translateY(0)';
         }, 100 + index * 150);
+      });
+
+      // 增强移动端点击反馈
+      buttons.forEach(btn => {
+        btn.addEventListener('touchstart', () => {
+          btn.classList.add('btn-active');
+        });
+
+        ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(event => {
+          btn.addEventListener(event, () => {
+            btn.classList.remove('btn-active');
+          });
+        });
       });
     });
   </script>
