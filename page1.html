@@ -44,24 +44,31 @@
       .transition-smooth {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
+      .scrollbar-hide {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
     }
   </style>
 </head>
 
-<body class="font-inter bg-gray-50 min-h-screen flex flex-col">
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col dark:bg-gray-900 dark:text-white transition-smooth">
   <!-- 导航栏 -->
-  <header class="bg-white shadow-md sticky top-0 z-50 transition-smooth">
+  <header class="bg-white shadow-md sticky top-0 z-50 dark:bg-gray-800 transition-smooth">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center space-x-2">
         <i class="fa fa-car text-primary text-2xl"></i>
-        <h1 class="text-xl md:text-2xl font-bold text-neutral">智能小车 <span class="text-primary">助教智能体</span></h1>
+        <h1 class="text-xl md:text-2xl font-bold text-neutral dark:text-white">智能小车 <span class="text-primary">助教智能体</span></h1>
       </div>
       <div class="flex items-center space-x-4">
-        <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 transition-smooth">
-          <i class="fa fa-moon-o text-neutral"></i>
+        <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-smooth" aria-label="切换主题">
+          <i class="fa fa-moon-o text-neutral dark:text-white"></i>
         </button>
-        <button id="helpButton" class="p-2 rounded-full hover:bg-gray-100 transition-smooth">
-          <i class="fa fa-question-circle text-neutral"></i>
+        <button id="helpButton" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-smooth" aria-label="帮助">
+          <i class="fa fa-question-circle text-neutral dark:text-white"></i>
         </button>
       </div>
     </div>
@@ -70,14 +77,14 @@
   <!-- 主内容区 -->
   <main class="flex-grow container mx-auto px-4 py-6 flex flex-col">
     <!-- 聊天区域 -->
-    <div id="chatContainer" class="flex-grow bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 overflow-hidden flex flex-col">
-      <div id="responseArea" class="flex-grow overflow-y-auto pb-4 space-y-4">
+    <div id="chatContainer" class="flex-grow bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 overflow-hidden flex flex-col dark:bg-gray-800 transition-smooth">
+      <div id="responseArea" class="flex-grow overflow-y-auto pb-4 space-y-4 scrollbar-hide">
         <div class="flex items-start space-x-3 animate-fade-in">
           <div class="bg-primary/10 p-2 rounded-full">
             <i class="fa fa-car text-primary"></i>
           </div>
-          <div class="bg-neutral-light rounded-lg p-4 shadow-sm">
-            <p class="text-neutral">你好！我是智能小车助教智能体，有什么可以帮助你的吗？</p>
+          <div class="bg-neutral-light dark:bg-gray-700 rounded-lg p-4 shadow-sm dark:shadow-gray-700 transition-smooth">
+            <p class="text-neutral dark:text-white">你好！我是智能小车助教智能体，有什么可以帮助你的吗？</p>
           </div>
         </div>
       </div>
@@ -87,25 +94,25 @@
         <div class="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
         <div class="w-2 h-2 rounded-full bg-primary animate-bounce" style="animation-delay: 0.2s"></div>
         <div class="w-2 h-2 rounded-full bg-primary animate-bounce" style="animation-delay: 0.4s"></div>
-        <span class="text-sm text-gray-500">正在思考...</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">正在思考...</span>
       </div>
     </div>
 
     <!-- 输入区域 -->
-    <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 relative">
+    <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 relative dark:bg-gray-800 transition-smooth">
       <div class="flex space-x-3">
-        <div class="hidden md:block w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-          <i class="fa fa-user text-gray-500"></i>
+        <div class="hidden md:flex w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center transition-smooth">
+          <i class="fa fa-user text-gray-500 dark:text-gray-400"></i>
         </div>
         <div class="flex-grow">
           <textarea id="userInput" rows="3" placeholder="输入你的问题..."
-            class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-smooth"></textarea>
+            class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-smooth bg-white dark:bg-gray-700 text-neutral dark:text-white placeholder-gray-400 dark:placeholder-gray-500"></textarea>
           <div class="flex justify-between items-center mt-2">
-            <div class="text-xs text-gray-500">
-              按 <kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Shift+Enter</kbd> 换行，<kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Enter</kbd> 发送
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              按 <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Shift+Enter</kbd> 换行，<kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Enter</kbd> 发送
             </div>
             <div class="flex space-x-2">
-              <button id="clearButton" class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg transition-smooth">
+              <button id="clearButton" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded-lg transition-smooth">
                 <i class="fa fa-trash-o mr-1"></i> 清空
               </button>
               <button id="sendButton" onclick="sendUserMessage()"
@@ -120,29 +127,29 @@
   </main>
 
   <!-- 页脚 -->
-  <footer class="bg-white border-t border-gray-200 py-4">
-    <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+  <footer class="bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700 py-4 transition-smooth">
+    <div class="container mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
       <p>© 2025 智能小车助教智能体 | 由 ChatGLM 提供技术支持</p>
     </div>
   </footer>
 
   <!-- 帮助模态框 -->
   <div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto dark:bg-gray-800 transition-smooth">
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold text-neutral">使用帮助</h2>
-          <button id="closeHelpModal" class="text-gray-400 hover:text-gray-600">
+          <h2 class="text-xl font-bold text-neutral dark:text-white">使用帮助</h2>
+          <button id="closeHelpModal" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white transition-smooth" aria-label="关闭帮助">
             <i class="fa fa-times text-xl"></i>
           </button>
         </div>
-        <div class="space-y-4 text-gray-700">
+        <div class="space-y-4 text-gray-700 dark:text-gray-300">
           <div>
-            <h3 class="font-semibold text-neutral">如何使用？</h3>
+            <h3 class="font-semibold text-neutral dark:text-white">如何使用？</h3>
             <p>在输入框中输入你的问题，然后点击"发送"按钮或按 Enter 键发送。</p>
           </div>
           <div>
-            <h3 class="font-semibold text-neutral">支持哪些功能？</h3>
+            <h3 class="font-semibold text-neutral dark:text-white">支持哪些功能？</h3>
             <ul class="list-disc pl-5 space-y-1">
               <li>智能小车编程指导</li>
               <li>传感器应用教程</li>
@@ -152,11 +159,11 @@
             </ul>
           </div>
           <div>
-            <h3 class="font-semibold text-neutral">快捷键</h3>
+            <h3 class="font-semibold text-neutral dark:text-white">快捷键</h3>
             <ul class="list-disc pl-5 space-y-1">
-              <li><kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Shift+Enter</kbd>：换行</li>
-              <li><kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Enter</kbd>：发送消息</li>
-              <li><kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Esc</kbd>：关闭帮助对话框</li>
+              <li><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Shift+Enter</kbd>：换行</li>
+              <li><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Enter</kbd>：发送消息</li>
+              <li><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Esc</kbd>：关闭帮助对话框</li>
             </ul>
           </div>
         </div>
@@ -181,62 +188,88 @@
     const closeHelpModal = document.getElementById('closeHelpModal');
     const themeToggle = document.getElementById('themeToggle');
     const chatContainer = document.getElementById('chatContainer');
+    const body = document.body;
 
-    // 帮助模态框事件
-    helpButton.addEventListener('click', () => {
-      helpModal.classList.remove('hidden');
-      helpModal.classList.add('flex');
-    });
+    // 主题切换优化
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+    applyTheme(isDarkMode);
 
-    closeHelpModal.addEventListener('click', () => {
-      helpModal.classList.add('hidden');
-      helpModal.classList.remove('flex');
-    });
-
-    // 点击模态框外部关闭
-    helpModal.addEventListener('click', (e) => {
-      if (e.target === helpModal) {
-        helpModal.classList.add('hidden');
-        helpModal.classList.remove('flex');
-      }
-    });
-
-    // 主题切换
-    let isDarkMode = false;
     themeToggle.addEventListener('click', () => {
       isDarkMode = !isDarkMode;
-      document.body.classList.toggle('bg-gray-900', isDarkMode);
-      document.body.classList.toggle('bg-gray-50', !isDarkMode);
-      document.body.classList.toggle('text-white', isDarkMode);
+      applyTheme(isDarkMode);
+      localStorage.setItem('darkMode', isDarkMode);
+    });
+
+    function applyTheme(darkMode) {
+      body.classList.toggle('bg-gray-900', darkMode);
+      body.classList.toggle('bg-gray-50', !darkMode);
+      body.classList.toggle('text-white', darkMode);
 
       // 更新所有相关元素
-      const bgElements = document.querySelectorAll('.bg-white');
+      const bgElements = document.querySelectorAll('.bg-white, .bg-gray-800, .bg-gray-100');
       bgElements.forEach(el => {
-        el.classList.toggle('bg-gray-800', isDarkMode);
-        el.classList.toggle('bg-white', !isDarkMode);
+        el.classList.toggle('bg-gray-800', darkMode);
+        el.classList.toggle('bg-white', !darkMode);
+        el.classList.toggle('bg-gray-700', darkMode);
+        el.classList.toggle('bg-gray-100', !darkMode);
       });
 
-      const textElements = document.querySelectorAll('.text-neutral');
+      const textElements = document.querySelectorAll('.text-neutral, .text-white, .text-gray-500, .text-gray-400, .text-gray-600, .text-gray-700, .text-gray-300, .text-gray-800');
       textElements.forEach(el => {
-        el.classList.toggle('text-white', isDarkMode);
-        el.classList.toggle('text-neutral', !isDarkMode);
+        el.classList.toggle('text-white', darkMode);
+        el.classList.toggle('text-neutral', !darkMode);
+        el.classList.toggle('text-gray-400', darkMode);
+        el.classList.toggle('text-gray-500', !darkMode);
+        el.classList.toggle('text-gray-300', darkMode);
+        el.classList.toggle('text-gray-600', !darkMode);
+        el.classList.toggle('text-gray-700', !darkMode);
+        el.classList.toggle('text-gray-800', !darkMode);
       });
 
       const shadowElements = document.querySelectorAll('.shadow-md');
       shadowElements.forEach(el => {
-        el.classList.toggle('shadow-gray-700', isDarkMode);
-        el.classList.toggle('shadow-md', !isDarkMode);
+        el.classList.toggle('shadow-gray-700', darkMode);
+        el.classList.toggle('shadow-md', !darkMode);
       });
 
       const icon = themeToggle.querySelector('i');
-      if (isDarkMode) {
+      if (darkMode) {
         icon.classList.remove('fa-moon-o');
         icon.classList.add('fa-sun-o');
       } else {
         icon.classList.remove('fa-sun-o');
         icon.classList.add('fa-moon-o');
       }
+    }
+
+    // 帮助模态框事件
+    helpButton.addEventListener('click', () => {
+      helpModal.classList.remove('hidden');
+      helpModal.classList.add('flex');
+      document.body.style.overflow = 'hidden'; // 防止背景滚动
     });
+
+    closeHelpModal.addEventListener('click', closeHelpModalHandler);
+
+    // 点击模态框外部关闭
+    helpModal.addEventListener('click', (e) => {
+      if (e.target === helpModal) {
+        closeHelpModalHandler();
+      }
+    });
+
+    // ESC键关闭模态框
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !helpModal.classList.contains('hidden')) {
+        closeHelpModalHandler();
+      }
+    });
+
+    function closeHelpModalHandler() {
+      helpModal.classList.add('hidden');
+      helpModal.classList.remove('flex');
+      document.body.style.overflow = ''; // 恢复背景滚动
+    }
 
     // 清空聊天
     clearButton.addEventListener('click', () => {
@@ -248,7 +281,7 @@
     function addSystemMessage(message) {
       const msgHtml = `
         <div class="flex items-center justify-center py-2">
-          <div class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          <div class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full transition-smooth">
             ${message}
           </div>
         </div>
@@ -271,6 +304,17 @@
       }
     });
 
+    // 自动调整输入框高度
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto';
+      userInput.style.height = (userInput.scrollHeight) + 'px';
+      if (userInput.scrollHeight > 200) {
+        userInput.style.overflowY = 'auto';
+      } else {
+        userInput.style.overflowY = 'hidden';
+      }
+    });
+
     // 异步获取访问令牌
     async function get_access_token() {
       const url = "https://chatglm.cn/chatglm/assistant-api/v1/get_token";
@@ -289,14 +333,25 @@
         });
 
         if (!response.ok) {
-          throw new Error('请求失败');
+          throw new Error(`HTTP错误，状态码: ${response.status}`);
         }
 
         const token_info = await response.json();
+        console.log('成功获取访问令牌');
         return token_info.result.access_token;
       } catch (error) {
         console.error('获取访问令牌时出错:', error);
-        addAssistantMessage('抱歉，连接服务器时出现错误，请稍后再试。');
+        let errorMessage = '抱歉，连接服务器时出现错误，请稍后再试。';
+
+        if (error.message.includes('NetworkError')) {
+          errorMessage = '网络连接失败，请检查你的网络设置。';
+        } else if (error.message.includes('401')) {
+          errorMessage = '认证失败，请检查API密钥是否正确。';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器内部错误，请稍后再试。';
+        }
+
+        addAssistantMessage(errorMessage);
         return null;
       }
     }
@@ -340,6 +395,7 @@
       };
 
       try {
+        console.log('发送消息到API:', prompt);
         const response = await fetch(url, {
           method: 'POST',
           headers: headers,
@@ -347,13 +403,14 @@
         });
 
         if (!response.ok) {
-          throw new Error('请求失败');
+          throw new Error(`HTTP错误，状态码: ${response.status}`);
         }
 
         let complete_output = "";
         const reader = response.body.getReader();
         let last_length = 0;
 
+        console.log('开始接收流式响应');
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -363,21 +420,39 @@
 
           for (const line of lines) {
             if (line.startsWith('data:')) {
-              const data_dict = JSON.parse(line.slice(5));
-              const output = handle_response(data_dict);
+              try {
+                const data_dict = JSON.parse(line.slice(5));
+                const output = handle_response(data_dict);
 
-              if (output) {
-                const new_text = output.slice(last_length);
-                complete_output += new_text;
-                last_length = output.length;
+                if (output) {
+                  const new_text = output.slice(last_length);
+                  complete_output += new_text;
+                  last_length = output.length;
+                }
+              } catch (parseError) {
+                console.error('解析响应数据时出错:', parseError, '数据:', line);
               }
             }
           }
         }
 
+        console.log('响应接收完成');
         return complete_output;
       } catch (error) {
         console.error('发送消息时出错:', error);
+        let errorMessage = '抱歉，处理你的请求时出现错误，请重试。';
+
+        if (error.message.includes('NetworkError')) {
+          errorMessage = '网络连接失败，请检查你的网络设置。';
+        } else if (error.message.includes('401')) {
+          errorMessage = '认证失败，请检查API密钥是否正确。';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'API端点未找到，请检查URL是否正确。';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器内部错误，请稍后再试。';
+        }
+
+        addAssistantMessage(errorMessage);
         return null;
       }
     }
@@ -390,6 +465,7 @@
       // 显示用户消息
       addUserMessage(message);
       userInput.value = '';
+      userInput.style.height = 'auto'; // 重置输入框高度
 
       // 显示加载状态
       loadingIndicator.classList.remove('hidden');
@@ -419,11 +495,11 @@
     function addUserMessage(message) {
       const msgHtml = `
         <div class="flex items-start space-x-3 justify-end animate-fade-in">
-          <div class="bg-neutral-light rounded-lg p-4 shadow-sm text-right">
-            <p class="text-neutral">${escapeHtml(message)}</p>
+          <div class="bg-neutral-light dark:bg-gray-700 rounded-lg p-4 shadow-sm dark:shadow-gray-700 text-right transition-smooth">
+            <p class="text-neutral dark:text-white">${escapeHtml(message)}</p>
           </div>
-          <div class="hidden md:block w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <i class="fa fa-user text-gray-500"></i>
+          <div class="hidden md:flex w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center transition-smooth">
+            <i class="fa fa-user text-gray-500 dark:text-gray-400"></i>
           </div>
         </div>
       `;
@@ -438,8 +514,8 @@
           <div class="bg-primary/10 p-2 rounded-full">
             <i class="fa fa-car text-primary"></i>
           </div>
-          <div class="bg-neutral-light rounded-lg p-4 shadow-sm">
-            <p class="text-neutral">${formatResponse(message)}</p>
+          <div class="bg-neutral-light dark:bg-gray-700 rounded-lg p-4 shadow-sm dark:shadow-gray-700 transition-smooth">
+            <p class="text-neutral dark:text-white">${formatResponse(message)}</p>
           </div>
         </div>
       `;
@@ -488,6 +564,7 @@
 
     // 初始化
     addSystemMessage('欢迎使用智能小车助教智能体');
+    userInput.focus(); // 自动聚焦到输入框
   </script>
 </body>
 </html>
