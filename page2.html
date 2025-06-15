@@ -1,27 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小车运动动态模拟 - 仿真教学平台</title>
+    <title>小车运动动态模拟优化版</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
     <script>
-        // 配置 Tailwind
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#4F46E5', // 紫色作为主色调
-                        secondary: '#06B6D4', // 青色作为辅助色
-                        accent: '#F59E0B', // 橙色作为强调色
-                        success: '#10B981', // 绿色表示成功
-                        warning: '#F59E0B', // 橙色表示警告
-                        danger: '#EF4444', // 红色表示危险
+                        primary: '#4F46E5',
+                        secondary: '#06B6D4',
+                        accent: '#F59E0B',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
                         neutral: {
                             100: '#F3F4F6',
                             200: '#E5E7EB',
@@ -62,7 +60,7 @@
             }
             .canvas-container {
                 position: relative;
-                aspect-ratio: 2/1; /* 保持2:1的宽高比 */
+                aspect-ratio: 2/1;
                 max-width: 100%;
             }
             .control-panel {
@@ -78,7 +76,6 @@
                     flex-direction: column;
                 }
             }
-            /* 移动端优化样式 */
             .mobile-drawing-hint {
                 display: none;
             }
@@ -102,11 +99,16 @@
                     padding: 0.8rem 1.2rem;
                 }
             }
+            /* 新增图表容器样式 */
+            .chart-container {
+                position: relative;
+                height: 300px;
+                max-width: 100%;
+            }
         }
     </style>
 
     <style>
-        /* 全局样式 */
         body {
             background: linear-gradient(135deg, #f8fafc, #e2e8f0);
             font-family: 'Inter', system-ui, sans-serif;
@@ -177,7 +179,7 @@
             width: 100%;
             height: 100%;
             transition: all 0.3s ease;
-            touch-action: none; /* 防止触摸事件与浏览器默认行为冲突 */
+            touch-action: none;
         }
 
         label {
@@ -301,7 +303,6 @@
                 font-size: 0.9rem;
             }
 
-            /* 移动端优化 */
             .container {
                 margin: 1rem auto;
                 padding: 0.5rem;
@@ -330,6 +331,20 @@
                 gap: 0.5rem;
             }
         }
+
+        /* 新增图表标题样式 */
+        .chart-title {
+            text-align: center;
+            font-weight: 500;
+            color: #4B5563;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 新增图表标签样式 */
+        .chart-label {
+            font-size: 12px;
+            fill: #4B5563;
+        }
     </style>
 </head>
 
@@ -339,7 +354,7 @@
             <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-3">
                 <i class="fa fa-car text-primary text-xl"></i>
             </div>
-            <h1>小车运动动态模拟 - 仿真教学平台</h1>
+            <h1>小车运动动态模拟 - 优化版</h1>
         </div>
 
         <!-- 主内容区 - 两列布局 -->
@@ -491,12 +506,12 @@
                 <!-- 偏差统计模块 -->
                 <div class="module">
                     <h2>偏差统计</h2>
-                    <div class="canvas-container" style="aspect-ratio: 4/1;">
+                    <div class="chart-container">
                         <canvas id="deviationChart"></canvas>
                     </div>
                     <div class="flex justify-between text-sm text-neutral-500 mt-2 px-4">
-                        <span><i class="fa fa-clock-o mr-1"></i>时间</span>
-                        <span><i class="fa fa-arrows-h mr-1"></i>偏差值</span>
+                        <span><i class="fa fa-clock-o mr-1"></i>时间 (秒)</span>
+                        <span><i class="fa fa-arrows-h mr-1"></i>偏差值 (像素)</span>
                     </div>
                 </div>
 
@@ -517,47 +532,39 @@
 
         <!-- 页脚 -->
         <footer class="mt-8 text-center text-neutral-500 text-sm">
-            <p>© 2025 小车运动动态模拟 - 仿真教学平台 | 使用 HTML, Canvas 和 JavaScript 构建</p>
+            <p>© 2023 小车运动动态模拟 - 优化版 | 使用 HTML, Canvas 和 JavaScript 构建</p>
         </footer>
     </div>
 
     <script>
-        // 确保DOM完全加载后再执行脚本
         document.addEventListener('DOMContentLoaded', function() {
-            // 响应式调整画布大小
             function resizeCanvas(canvas, container) {
                 const containerRect = container.getBoundingClientRect();
                 const width = containerRect.width;
                 const height = containerRect.height;
 
-                // 设置画布的内部分辨率
                 canvas.width = width;
                 canvas.height = height;
 
-                // 保持原有的样式
                 canvas.style.width = '100%';
                 canvas.style.height = '100%';
             }
 
-            // PID 控制器类
             class PIDController {
                 constructor(kp, ki, kd) {
                     this.kp = kp;
                     this.ki = ki;
                     this.kd = kd;
                     this.prevError = 0;
-                    this.integral = 0; // 积分项初始化为0
-                    this.dt = 0.1; // 时间步长
+                    this.integral = 0;
+                    this.dt = 0.1;
                 }
 
                 update(error) {
                     const pTerm = this.kp * error;
                     this.integral += error * this.dt;
                     const iTerm = this.ki * this.integral;
-
-                    // 修改微分项计算，保持与原始PD控制器一致
                     const dTerm = this.kd * (error - this.prevError);
-
                     this.prevError = error;
                     return pTerm + iTerm + dTerm;
                 }
@@ -568,7 +575,6 @@
                 }
             }
 
-            // 小车模拟类
             class CarSimulation {
                 constructor() {
                     this.simulationRunning = false;
@@ -576,21 +582,19 @@
                     this.trajectoryPoints = [];
                     this.currentPosition = null;
                     this.currentDirection = 0;
-                    this.pid = new PIDController(0.3, 0.0, 0.3); // Ki初始化为0
+                    this.pid = new PIDController(0.3, 0.0, 0.3);
                     this.currentIndex = 0;
                     this.data = [];
                     this.trajectoryX = [];
                     this.trajectoryY = [];
-                    this.viewDistance = 2.5; // 视野距离
+                    this.viewDistance = 2.5;
                     this.speed = 253;
                     this.sampleDistance = 10;
-
-                    // 新增偏差数据存储
                     this.deviationData = [];
                     this.timeData = [];
                     this.currentSimulationTime = 0;
                     this.lastSampleTime = 0;
-                    this.sampleInterval = 0.1; // 采样间隔(秒)
+                    this.sampleInterval = 0.1;
                 }
 
                 startSimulation() {
@@ -619,9 +623,7 @@
                     this.simulationRunning = false;
                     this.simulationPaused = false;
                     this.currentIndex = 0;
-                    this.pid.reset(); // 重置PID控制器
-
-                    // 重置偏差数据
+                    this.pid.reset();
                     this.deviationData = [];
                     this.timeData = [];
                     this.currentSimulationTime = 0;
@@ -641,7 +643,6 @@
                     const intervalId = setInterval(() => {
                         if (this.simulationRunning && this.currentIndex < this.data.length) {
                             if (!this.simulationPaused) {
-                                // 更新模拟时间
                                 this.currentSimulationTime += dt;
 
                                 const viewStartX = this.currentPosition[0];
@@ -688,10 +689,8 @@
                                 this.trajectoryX.push(this.currentPosition[0]);
                                 this.trajectoryY.push(this.currentPosition[1]);
 
-                                // 计算当前位置与最近轨迹点的偏差
                                 const deviation = this.calculateDeviation(this.currentPosition);
 
-                                // 按照固定时间间隔采样偏差数据
                                 if (this.currentSimulationTime - this.lastSampleTime >= this.sampleInterval) {
                                     this.deviationData.push(deviation);
                                     this.timeData.push(this.currentSimulationTime);
@@ -710,7 +709,6 @@
                     }, 0.0001 * 1000);
                 }
 
-                // 计算当前位置与原始轨迹的偏差
                 calculateDeviation(position) {
                     if (this.data.length === 0) return 0;
 
@@ -746,7 +744,6 @@
                         trajectoryY: this.trajectoryY,
                         originalTrajectory: this.data,
                         viewDistance: this.viewDistance,
-                        // 新增偏差数据
                         deviationData: this.deviationData,
                         timeData: this.timeData
                     };
@@ -784,18 +781,14 @@
             const applyParamsButton = document.getElementById('applyParams');
             const statusElement = document.getElementById('status');
             const canvasContainer = document.querySelector('.canvas-container');
-            const deviationChartContainer = document.querySelector('#deviationChart').parentElement;
+            const deviationChartContainer = document.querySelector('.chart-container');
 
-            // 初始化画布大小
             resizeCanvas(canvas, canvasContainer);
             resizeCanvas(deviationChart, deviationChartContainer);
 
-            // 监听窗口大小变化，调整画布
             window.addEventListener('resize', () => {
                 resizeCanvas(canvas, canvasContainer);
                 resizeCanvas(deviationChart, deviationChartContainer);
-
-                // 重新绘制画布内容
                 updateStatus();
             });
 
@@ -806,22 +799,19 @@
             let originalTrajectoryImage = null;
             let combinedImage = null;
             let isFirstRun = true;
-            const CAR_SIZE = 15; // 小车大小
+            const CAR_SIZE = 15;
 
-            // 绘制轨迹相关事件处理
             drawButton.addEventListener('click', () => {
                 isDrawing = true;
                 drawnPoints = [];
                 statusElement.textContent = '正在绘制轨迹，请在画布上拖动鼠标或手指...';
                 statusElement.className = 'bg-primary/10 text-primary px-3 py-2 rounded-lg text-center';
 
-                // 添加鼠标事件监听
                 canvas.addEventListener('mousedown', onDrawStart);
                 canvas.addEventListener('mousemove', onDraw);
                 canvas.addEventListener('mouseup', onDrawEnd);
                 canvas.addEventListener('mouseleave', onDrawEnd);
 
-                // 添加触摸事件监听
                 canvas.addEventListener('touchstart', onTouchStart, { passive: false });
                 canvas.addEventListener('touchmove', onTouchMove, { passive: false });
                 canvas.addEventListener('touchend', onTouchEnd);
@@ -832,7 +822,6 @@
                 drawButton.disabled = true;
                 clearButton.disabled = false;
 
-                // 添加按钮状态变化效果
                 drawButton.classList.add('bg-primary/80');
                 setTimeout(() => {
                     drawButton.classList.remove('bg-primary/80');
@@ -884,15 +873,12 @@
                     resetButton.disabled = false;
                     drawButton.disabled = false;
 
-                    // 保存原轨迹图像
                     originalTrajectoryImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     combinedImage = originalTrajectoryImage;
                     isFirstRun = true;
 
-                    // 重置偏差曲线
                     clearDeviationChart();
 
-                    // 添加成功反馈动画
                     canvas.classList.add('scale-101');
                     setTimeout(() => {
                         canvas.classList.remove('scale-101');
@@ -904,11 +890,8 @@
                 }
             }
 
-            // 触摸事件处理
             function onTouchStart(event) {
-                // 阻止浏览器默认行为
                 event.preventDefault();
-
                 const touch = event.touches[0];
                 const rect = canvas.getBoundingClientRect();
                 const x = touch.clientX - rect.left;
@@ -918,9 +901,7 @@
             }
 
             function onTouchMove(event) {
-                // 阻止浏览器默认行为
                 event.preventDefault();
-
                 if (isDrawing && event.touches.length > 0) {
                     const touch = event.touches[0];
                     const rect = canvas.getBoundingClientRect();
@@ -930,7 +911,6 @@
                     if (drawnPoints.length > 0) {
                         const lastPoint = drawnPoints[drawnPoints.length - 1];
                         const distance = Math.sqrt((x - lastPoint[0]) ** 2 + (y - lastPoint[1]) ** 2);
-                        // 移动端降低点的密度，提高绘制流畅度
                         if (distance < 8) {
                             return;
                         }
@@ -945,15 +925,13 @@
                 onDrawEnd();
             }
 
-            // 辅助函数：绘制当前点
             function drawCurrentPoint(x, y) {
                 ctx.beginPath();
                 ctx.arc(x, y, 2, 0, 2 * Math.PI);
-                ctx.fillStyle = '#10B981'; // 绿色
+                ctx.fillStyle = '#10B981';
                 ctx.fill();
             }
 
-            // 辅助函数：重绘整个轨迹
             function redrawTrajectory() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.beginPath();
@@ -961,7 +939,7 @@
                 for (let i = 1; i < drawnPoints.length; i++) {
                     ctx.lineTo(drawnPoints[i][0], drawnPoints[i][1]);
                 }
-                ctx.strokeStyle = '#10B981'; // 绿色
+                ctx.strokeStyle = '#10B981';
                 ctx.lineWidth = 3;
                 ctx.stroke();
             }
@@ -978,10 +956,8 @@
                 combinedImage = null;
                 isFirstRun = true;
 
-                // 重置偏差曲线
                 clearDeviationChart();
 
-                // 添加清除动画效果
                 canvas.classList.add('opacity-50');
                 setTimeout(() => {
                     canvas.classList.remove('opacity-50');
@@ -998,7 +974,6 @@
                     intervalId = setInterval(updateStatus, 100);
                 }
 
-                // 添加按钮点击效果
                 startButton.classList.add('scale-95');
                 setTimeout(() => {
                     startButton.classList.remove('scale-95');
@@ -1012,7 +987,6 @@
                 startButton.disabled = false;
                 pauseButton.disabled = true;
 
-                // 添加按钮点击效果
                 pauseButton.classList.add('scale-95');
                 setTimeout(() => {
                     pauseButton.classList.remove('scale-95');
@@ -1028,7 +1002,6 @@
                 clearInterval(intervalId);
                 intervalId = null;
 
-                // 重置时清除所有轨迹
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 if (originalTrajectoryImage) {
                     ctx.putImageData(originalTrajectoryImage, 0, 0);
@@ -1036,10 +1009,8 @@
                 combinedImage = originalTrajectoryImage;
                 isFirstRun = true;
 
-                // 重置偏差曲线
                 clearDeviationChart();
 
-                // 添加重置动画效果
                 canvas.classList.add('scale-98');
                 setTimeout(() => {
                     canvas.classList.remove('scale-98');
@@ -1065,44 +1036,38 @@
                     ` (Kp=${kp}, Ki=${ki}, Kd=${kd}, 速度=${speed}, 视野=${viewDistance})`;
                 statusElement.className = 'bg-primary/10 text-primary px-3 py-2 rounded-lg text-center';
 
-                // 添加参数应用成功动画
                 applyParamsButton.classList.add('bg-primary/90');
                 setTimeout(() => {
                     applyParamsButton.classList.remove('bg-primary/90');
                 }, 300);
             });
 
-            // 绘制小车函数（包含视野范围）
             function drawCar(x, y, direction, viewDistance) {
-                // 绘制视野范围
                 viewDistance = viewDistance * 8;
                 ctx.beginPath();
                 ctx.arc(x, y, viewDistance, 0, 2 * Math.PI);
-                ctx.strokeStyle = 'rgba(79, 70, 229, 0.3)'; // 紫色
+                ctx.strokeStyle = 'rgba(79, 70, 229, 0.3)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.fillStyle = 'rgba(79, 70, 229, 0.1)';
                 ctx.fill();
 
-                // 绘制小车
                 ctx.save();
                 ctx.translate(x, y);
                 ctx.rotate(direction);
 
-                // 绘制小车主体（三角形）
                 ctx.beginPath();
                 ctx.moveTo(CAR_SIZE, 0);
                 ctx.lineTo(-CAR_SIZE / 2, CAR_SIZE / 2);
                 ctx.lineTo(-CAR_SIZE / 2, -CAR_SIZE / 2);
                 ctx.closePath();
 
-                ctx.fillStyle = '#EF4444'; // 红色
+                ctx.fillStyle = '#EF4444';
                 ctx.fill();
-                ctx.strokeStyle = '#B91C1C'; // 深红色
+                ctx.strokeStyle = '#B91C1C';
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // 绘制小车窗户
                 ctx.beginPath();
                 ctx.moveTo(CAR_SIZE/2, 0);
                 ctx.lineTo(-CAR_SIZE / 4, CAR_SIZE / 4);
@@ -1117,160 +1082,214 @@
             function updateStatus() {
                 const status = simulation.getStatus();
 
-                // 绘制原轨迹
                 if (originalTrajectoryImage) {
                     ctx.putImageData(originalTrajectoryImage, 0, 0);
                 }
 
-                // 绘制小车轨迹
                 if (status.trajectoryX.length > 0) {
                     ctx.beginPath();
                     ctx.moveTo(status.trajectoryX[0], status.trajectoryY[0]);
                     for (let i = 1; i < status.trajectoryX.length; i++) {
                         ctx.lineTo(status.trajectoryX[i], status.trajectoryY[i]);
                     }
-                    ctx.strokeStyle = '#3B82F6'; // 蓝色
+                    ctx.strokeStyle = '#3B82F6';
                     ctx.lineWidth = 3;
                     ctx.stroke();
 
-                    // 循迹结束后保存完整轨迹图像
                     if (status.status === 'stopped' && isFirstRun) {
                         combinedImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
                         isFirstRun = false;
                     }
                 }
 
-                // 绘制小车及其视野范围
                 if (status.position) {
                     drawCar(status.position[0], status.position[1], status.direction, status.viewDistance);
                 }
 
-                // 循迹结束后显示完整轨迹
                 if (status.status === 'stopped' && combinedImage) {
                     ctx.putImageData(combinedImage, 0, 0);
 
-                    // 绘制最后位置的小车及其视野范围
                     if (status.position) {
                         drawCar(status.position[0], status.position[1], status.direction, status.viewDistance);
                     }
                 }
 
-                // 更新偏差曲线
                 updateDeviationChart(status.deviationData, status.timeData);
             }
 
-            // 绘制偏差曲线
+            // 优化后的偏差图表绘制函数
             function updateDeviationChart(deviationData, timeData) {
-                // 清除画布
                 deviationCtx.clearRect(0, 0, deviationChart.width, deviationChart.height);
 
-                // 如果没有数据，直接返回
                 if (deviationData.length === 0) {
                     return;
                 }
 
-                // 计算最大值和最小值
+                // 增加左侧边距，给纵坐标数值留出空间
+                const marginLeft = 50;  // 左侧边距增加
+                const marginBottom = 30;
+                const marginRight = 20;
+                const marginTop = 20;
+
+                const chartWidth = deviationChart.width - marginLeft - marginRight;
+                const chartHeight = deviationChart.height - marginTop - marginBottom;
+
+                // 计算最大值
                 const maxDeviation = Math.max(...deviationData);
                 const minDeviation = Math.min(...deviationData);
-                const maxTime = Math.max(...timeData);
+                const maxTime = Math.max(...timeData) || 1;
 
-                // 设置边距
-                const margin = 20;
-                const chartWidth = deviationChart.width - 2 * margin;
-                const chartHeight = deviationChart.height - 2 * margin;
-
-                // 计算缩放比例
-                const xScale = maxTime > 0 ? chartWidth / maxTime : 0;
-                const yScale = maxDeviation > 0 ? chartHeight / (maxDeviation - minDeviation) : 0;
+                // 绘制图表标题
+                deviationCtx.fillStyle = '#374151';
+                deviationCtx.font = 'bold 14px Inter';
+                deviationCtx.textAlign = 'center';
+                deviationCtx.fillText('小车轨迹跟踪偏差统计', deviationChart.width / 2, 15);
 
                 // 绘制坐标轴
                 deviationCtx.beginPath();
-                deviationCtx.moveTo(margin, margin);
-                deviationCtx.lineTo(margin, margin + chartHeight);
-                deviationCtx.lineTo(margin + chartWidth, margin + chartHeight);
+                deviationCtx.moveTo(marginLeft, marginTop);
+                deviationCtx.lineTo(marginLeft, marginTop + chartHeight);
+                deviationCtx.lineTo(marginLeft + chartWidth, marginTop + chartHeight);
                 deviationCtx.strokeStyle = '#333';
                 deviationCtx.lineWidth = 1;
                 deviationCtx.stroke();
 
                 // 绘制刻度
-                const tickCount = 5;
+                const tickCount = 6;
                 for (let i = 0; i <= tickCount; i++) {
                     // X轴刻度
-                    const xPos = margin + (i / tickCount) * chartWidth;
+                    const xPos = marginLeft + (i / tickCount) * chartWidth;
                     deviationCtx.beginPath();
-                    deviationCtx.moveTo(xPos, margin + chartHeight);
-                    deviationCtx.lineTo(xPos, margin + chartHeight + 5);
+                    deviationCtx.moveTo(xPos, marginTop + chartHeight);
+                    deviationCtx.lineTo(xPos, marginTop + chartHeight + 5);
                     deviationCtx.stroke();
 
                     // 显示时间刻度值
                     const timeValue = (i / tickCount) * maxTime;
-                    deviationCtx.fillStyle = '#333';
-                    deviationCtx.font = '10px Arial';
-                    deviationCtx.fillText(timeValue.toFixed(1), xPos - 10, margin + chartHeight + 15);
+                    deviationCtx.fillStyle = '#4B5563';
+                    deviationCtx.font = '10px Inter';
+                    deviationCtx.textAlign = 'center';
+                    deviationCtx.fillText(timeValue.toFixed(1), xPos, marginTop + chartHeight + 18);
+                }
 
-                    // Y轴刻度
-                    const yPos = margin + chartHeight - (i / tickCount) * chartHeight;
+                // Y轴刻度和标签
+                for (let i = 0; i <= 5; i++) {
+                    const yPos = marginTop + chartHeight - (i / 5) * chartHeight;
                     deviationCtx.beginPath();
-                    deviationCtx.moveTo(margin, yPos);
-                    deviationCtx.lineTo(margin - 5, yPos);
+                    deviationCtx.moveTo(marginLeft, yPos);
+                    deviationCtx.lineTo(marginLeft - 5, yPos);
                     deviationCtx.stroke();
 
-                    // 显示偏差刻度值
-                    const deviationValue = minDeviation + (i / tickCount) * (maxDeviation - minDeviation);
-                    deviationCtx.fillText(deviationValue.toFixed(1), margin - 30, yPos + 4);
+                    const deviationValue = minDeviation + (i / 5) * (maxDeviation - minDeviation);
+                    deviationCtx.fillStyle = '#4B5563';
+                    deviationCtx.font = '10px Inter';
+                    deviationCtx.textAlign = 'right';
+                    deviationCtx.fillText(deviationValue.toFixed(1), marginLeft - 8, yPos + 3);
                 }
+
+                // 绘制单位标签
+                deviationCtx.textAlign = 'center';
+                deviationCtx.fillText('时间 (秒)', marginLeft + chartWidth / 2, deviationChart.height - 5);
+
+                deviationCtx.save();
+                deviationCtx.translate(10, marginTop + chartHeight / 2);
+                deviationCtx.rotate(-Math.PI / 2);
+                deviationCtx.textAlign = 'center';
+                deviationCtx.fillText('偏差值 (像素)', 0, 0);
+                deviationCtx.restore();
 
                 // 绘制偏差曲线
                 if (deviationData.length > 1) {
                     deviationCtx.beginPath();
                     deviationCtx.moveTo(
-                        margin + timeData[0] * xScale,
-                        margin + chartHeight - (deviationData[0] - minDeviation) * yScale
+                        marginLeft + timeData[0] * (chartWidth / maxTime),
+                        marginTop + chartHeight - (deviationData[0] - minDeviation) * (chartHeight / (maxDeviation - minDeviation))
                     );
 
                     for (let i = 1; i < deviationData.length; i++) {
                         deviationCtx.lineTo(
-                            margin + timeData[i] * xScale,
-                            margin + chartHeight - (deviationData[i] - minDeviation) * yScale
+                            marginLeft + timeData[i] * (chartWidth / maxTime),
+                            marginTop + chartHeight - (deviationData[i] - minDeviation) * (chartHeight / (maxDeviation - minDeviation))
                         );
                     }
 
-                    deviationCtx.strokeStyle = 'red';
+                    deviationCtx.strokeStyle = '#EF4444';
                     deviationCtx.lineWidth = 2;
                     deviationCtx.stroke();
                 }
 
                 // 显示当前偏差值
                 if (deviationData.length > 0) {
-                    deviationCtx.fillStyle = 'black';
-                    deviationCtx.font = '12px Arial';
-                    deviationCtx.fillText(`当前偏差: ${deviationData[deviationData.length - 1].toFixed(2)}`, margin, margin - 5);
+                    const lastDeviation = deviationData[deviationData.length - 1];
+                    deviationCtx.fillStyle = '#111827';
+                    deviationCtx.font = 'bold 12px Inter';
+                    deviationCtx.textAlign = 'right';
+                    deviationCtx.fillText(`当前偏差: ${lastDeviation.toFixed(2)}`, deviationChart.width - 10, 25);
+
+                    // 显示偏差分析
+                    let analysis = '';
+                    let color = '#111827';
+                    if (lastDeviation < 5) {
+                        analysis = '跟踪精度: 优秀';
+                        color = '#10B981';
+                    } else if (lastDeviation < 10) {
+                        analysis = '跟踪精度: 良好';
+                        color = '#F59E0B';
+                    } else {
+                        analysis = '跟踪精度: 需优化';
+                        color = '#EF4444';
+                    }
+
+                    deviationCtx.fillStyle = color;
+                    deviationCtx.font = 'bold 12px Inter';
+                    deviationCtx.textAlign = 'right';
+                    deviationCtx.fillText(analysis, deviationChart.width - 10, 45);
                 }
             }
 
-            // 清除偏差曲线
             function clearDeviationChart() {
                 deviationCtx.clearRect(0, 0, deviationChart.width, deviationChart.height);
 
                 // 绘制坐标轴
-                const margin = 20;
-                const chartWidth = deviationChart.width - 2 * margin;
-                const chartHeight = deviationChart.height - 2 * margin;
+                const marginLeft = 50;
+                const marginBottom = 30;
+                const marginRight = 20;
+                const marginTop = 20;
+                const chartWidth = deviationChart.width - marginLeft - marginRight;
+                const chartHeight = deviationChart.height - marginTop - marginBottom;
 
                 deviationCtx.beginPath();
-                deviationCtx.moveTo(margin, margin);
-                deviationCtx.lineTo(margin, margin + chartHeight);
-                deviationCtx.lineTo(margin + chartWidth, margin + chartHeight);
+                deviationCtx.moveTo(marginLeft, marginTop);
+                deviationCtx.lineTo(marginLeft, marginTop + chartHeight);
+                deviationCtx.lineTo(marginLeft + chartWidth, marginTop + chartHeight);
                 deviationCtx.strokeStyle = '#333';
                 deviationCtx.lineWidth = 1;
                 deviationCtx.stroke();
 
+                // 绘制标题
+                deviationCtx.fillStyle = '#374151';
+                deviationCtx.font = 'bold 14px Inter';
+                deviationCtx.textAlign = 'center';
+                deviationCtx.fillText('小车轨迹跟踪偏差统计', deviationChart.width / 2, 15);
+
+                // 绘制单位标签
+                deviationCtx.textAlign = 'center';
+                deviationCtx.fillStyle = '#4B5563';
+                deviationCtx.font = '10px Inter';
+                deviationCtx.fillText('时间 (秒)', marginLeft + chartWidth / 2, deviationChart.height - 5);
+
+                deviationCtx.save();
+                deviationCtx.translate(10, marginTop + chartHeight / 2);
+                deviationCtx.rotate(-Math.PI / 2);
+                deviationCtx.textAlign = 'center';
+                deviationCtx.fillText('偏差值 (像素)', 0, 0);
+                deviationCtx.restore();
+
                 // 显示提示信息
                 deviationCtx.fillStyle = '#666';
-                deviationCtx.font = '12px Arial';
+                deviationCtx.font = '14px Inter';
                 deviationCtx.textAlign = 'center';
-                deviationCtx.fillText('模拟开始后显示偏差曲线', margin + chartWidth / 2, margin + chartHeight / 2);
-                deviationCtx.textAlign = 'left';
+                deviationCtx.fillText('模拟开始后显示偏差曲线', marginLeft + chartWidth / 2, marginTop + chartHeight / 2);
             }
 
             // 初始化偏差图表
@@ -1278,5 +1297,4 @@
         });
     </script>
 </body>
-
 </html>
