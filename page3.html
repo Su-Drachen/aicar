@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能车路径规划算法可视化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#f97316',
+                        accent: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .map-grid {
+                background-size: 20px 20px;
+                background-image: 
+                    linear-gradient(to right, rgba(156, 163, 175, 0.1) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(156, 163, 175, 0.1) 1px, transparent 1px);
+            }
+            .btn-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .algo-card {
+                @apply bg-white rounded-xl shadow-md p-4 border border-gray-100 transition-all duration-300 hover:shadow-lg;
+            }
+            .algo-card-active {
+                @apply bg-primary/5 border-primary;
+            }
+            @keyframes jump {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            .jump-animation {
+                animation: jump 0.5s ease-in-out;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-car text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-dark">智能车路径规划算法可视化</h1>
+            </div>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#map" class="text-gray-600 hover:text-primary transition-colors">地图</a></li>
+                    <li><a href="#algorithms" class="text-gray-600 hover:text-primary transition-colors">算法</a></li>
+                    <li><a href="#results" class="text-gray-600 hover:text-primary transition-colors">结果</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 左侧控制面板 -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- 地图设置 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-map-marker text-primary mr-2"></i>地图设置
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">地图大小</label>
+                        <div class="flex space-x-2">
+                            <div class="flex-1">
+                                <label class="text-xs text-gray-500">宽度</label>
+                                <input type="number" id="map-width" value="50" min="10" max="200" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-xs text-gray-500">高度</label>
+                                <input type="number" id="map-height" value="30" min="10" max="200" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">障碍物密度</label>
+                        <div class="flex items-center">
+                            <input type="range" id="obstacle-density" min="0" max="100" value="30" 
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                            <span id="density-value" class="ml-2 text-sm font-medium">30%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button id="generate-map" class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
+                            <i class="fa fa-refresh mr-2"></i>生成地图
+                        </button>
+                        <button id="clear-map" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
+                            <i class="fa fa-trash mr-2"></i>清除地图
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="draw-obstacle" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
+                            <i class="fa fa-pencil mr-2"></i>绘制障碍
+                        </button>
+                        <button id="erase-obstacle" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
+                            <i class="fa fa-eraser mr-2"></i>擦除障碍
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 算法选择 -->
+            <div id="algorithms" class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-cogs text-primary mr-2"></i>算法选择
+                </h2>
+                <div class="space-y-3">
+                    <div class="algo-card algo-card-active" data-algorithm="a-star">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-primary/10 p-2 rounded-lg">
+                                <i class="fa fa-star text-primary"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-gray-900">A*算法</h3>
+                                <p class="text-xs text-gray-500 mt-1">结合Dijkstra和贪心最佳优先搜索的启发式搜索算法</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="algo-card" data-algorithm="dijkstra">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-gray-100 p-2 rounded-lg">
+                                <i class="fa fa-road text-gray-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-gray-900">Dijkstra算法</h3>
+                                <p class="text-xs text-gray-500 mt-1">经典的广度优先搜索算法，保证找到最短路径</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="algo-card" data-algorithm="dfs">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-gray-100 p-2 rounded-lg">
+                                <i class="fa fa-arrows-v text-gray-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-gray-900">DFS算法</h3>
+                                <p class="text-xs text-gray-500 mt-1">深度优先搜索，沿着一条路径尽可能深地探索</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 添加JPS算法卡片 -->
+                    <div class="algo-card" data-algorithm="jps">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-gray-100 p-2 rounded-lg">
+                                <i class="fa fa-rocket text-gray-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-gray-900">JPS算法</h3>
+                                <p class="text-xs text-gray-500 mt-1">跳跃点搜索，通过跳过对称路径提高效率</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 算法参数 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-sliders text-primary mr-2"></i>算法参数
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">启发函数</label>
+                        <select id="heuristic" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            <option value="manhattan">曼哈顿距离</option>
+                            <option value="euclidean">欧几里得距离</option>
+                            <option value="chebyshev">切比雪夫距离</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">对角线移动</label>
+                        <div class="flex items-center space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="diagonal" value="true" checked class="text-primary focus:ring-primary h-4 w-4">
+                                <span class="ml-2 text-sm text-gray-700">允许</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="diagonal" value="false" class="text-primary focus:ring-primary h-4 w-4">
+                                <span class="ml-2 text-sm text-gray-700">不允许</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">可视化速度</label>
+                        <div class="flex items-center">
+                            <input type="range" id="visualization-speed" min="1" max="100" value="50" 
+                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                            <span id="speed-value" class="ml-2 text-sm font-medium">50</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧地图和结果展示 -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- 地图区域 -->
+            <div id="map" class="bg-white rounded-xl shadow-md p-4 relative overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold flex items-center">
+                        <i class="fa fa-map text-primary mr-2"></i>路径规划地图
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button id="set-start" class="bg-secondary hover:bg-secondary/90 text-white font-medium py-1 px-3 rounded-lg text-sm transition-all duration-300 flex items-center">
+                            <i class="fa fa-flag text-white mr-1"></i>设置起点
+                        </button>
+                        <button id="set-goal" class="bg-accent hover:bg-accent/90 text-white font-medium py-1 px-3 rounded-lg text-sm transition-all duration-300 flex items-center">
+                            <i class="fa fa-bullseye text-white mr-1"></i>设置终点
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <div id="map-container" class="w-full bg-gray-100 rounded-lg map-grid overflow-hidden" style="height: 500px;">
+                        <canvas id="map-canvas" class="w-full h-full"></canvas>
+                    </div>
+                    
+                    <!-- 图例 -->
+                    <div class="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-lg shadow-md text-xs">
+                        <div class="flex items-center mb-1">
+                            <div class="w-3 h-3 bg-primary rounded-sm mr-2"></div>
+                            <span>起点</span>
+                        </div>
+                        <div class="flex items-center mb-1">
+                            <div class="w-3 h-3 bg-accent rounded-sm mr-2"></div>
+                            <span>终点</span>
+                        </div>
+                        <div class="flex items-center mb-1">
+                            <div class="w-3 h-3 bg-gray-700 rounded-sm mr-2"></div>
+                            <span>障碍物</span>
+                        </div>
+                        <div class="flex items-center mb-1">
+                            <div class="w-3 h-3 bg-blue-100 rounded-sm mr-2"></div>
+                            <span>已探索区域</span>
+                        </div>
+                        <div class="flex items-center mb-1">
+                            <div class="w-3 h-3 bg-yellow-300 rounded-sm mr-2"></div>
+                            <span>跳跃点</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-secondary rounded-sm mr-2"></div>
+                            <span>最终路径</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 结果统计 -->
+            <div id="results" class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fa fa-bar-chart text-primary mr-2"></i>算法性能比较
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">路径长度</div>
+                        <div class="text-2xl font-bold text-primary" id="path-length">-</div>
+                        <div class="text-xs text-gray-500 mt-1">从起点到终点的步数</div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">探索节点数</div>
+                        <div class="text-2xl font-bold text-primary" id="nodes-explored">-</div>
+                        <div class="text-xs text-gray-500 mt-1">算法探索的总节点数</div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="text-sm text-gray-500 mb-1">计算时间</div>
+                        <div class="text-2xl font-bold text-primary" id="computation-time">-</div>
+                        <div class="text-xs text-gray-500 mt-1">算法运行的总时间(ms)</div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button id="run-algorithm" class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
+                        <i class="fa fa-play mr-2"></i>运行算法
+                    </button>
+                    <button id="reset-map" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center">
+                        <i class="fa fa-refresh mr-2"></i>重置地图
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-car text-primary text-xl"></i>
+                        <span class="font-bold">智能车路径规划算法可视化</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-1">一个用于演示和比较不同路径规划算法的交互式工具</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-linkedin text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-twitter text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+                &copy; 2025 智能车路径规划项目 | 使用 Tailwind CSS 和 Canvas 构建 | 新增连续路径显示
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 地图和界面配置
+            const config = {
+                cellSize: 15,
+                startColor: '#3b82f6',
+                goalColor: '#10b981',
+                obstacleColor: '#374151',
+                exploredColor: '#dbeafe',
+                jumpPointColor: '#f59e0b',
+                pathColor: '#f97316',
+                gridLineColor: 'rgba(209, 213, 219, 0.3)',
+                currentMode: 'view', // view, draw, erase, start, goal
+                animationSpeed: 50, // 1-100
+                heuristic: 'manhattan',
+                allowDiagonal: true,
+                selectedAlgorithm: 'a-star'
+            };
+            
+            // 地图数据
+            let map = {
+                width: 50,
+                height: 30,
+                grid: [],
+                start: { x: 5, y: 5 },
+                goal: { x: 45, y: 25 },
+                path: [],
+                explored: [],
+                jumpPoints: [] // 新增：存储跳跃点
+            };
+            
+            // 算法性能数据
+            let algorithmStats = {
+                pathLength: 0,
+                nodesExplored: 0,
+                computationTime: 0
+            };
+            
+            // 获取DOM元素
+            const canvas = document.getElementById('map-canvas');
+            const ctx = canvas.getContext('2d');
+            const mapContainer = document.getElementById('map-container');
+            const mapWidthInput = document.getElementById('map-width');
+            const mapHeightInput = document.getElementById('map-height');
+            const obstacleDensityInput = document.getElementById('obstacle-density');
+            const densityValue = document.getElementById('density-value');
+            const visualizationSpeedInput = document.getElementById('visualization-speed');
+            const speedValue = document.getElementById('speed-value');
+            const heuristicSelect = document.getElementById('heuristic');
+            const diagonalRadios = document.querySelectorAll('input[name="diagonal"]');
+            const runAlgorithmBtn = document.getElementById('run-algorithm');
+            const resetMapBtn = document.getElementById('reset-map');
+            const generateMapBtn = document.getElementById('generate-map');
+            const clearMapBtn = document.getElementById('clear-map');
+            const setStartBtn = document.getElementById('set-start');
+            const setGoalBtn = document.getElementById('set-goal');
+            const drawObstacleBtn = document.getElementById('draw-obstacle');
+            const eraseObstacleBtn = document.getElementById('erase-obstacle');
+            const pathLengthElement = document.getElementById('path-length');
+            const nodesExploredElement = document.getElementById('nodes-explored');
+            const computationTimeElement = document.getElementById('computation-time');
+            const algoCards = document.querySelectorAll('.algo-card');
+            
+            // 绘制箭头函数
+            function drawArrow(ctx, fromX, fromY, toX, toY, color) {
+                const headLength = 8; // 箭头头部长度
+                const dx = toX - fromX;
+                const dy = toY - fromY;
+                const angle = Math.atan2(dy, dx);
+                
+                ctx.save();
+                ctx.translate(toX, toY);
+                ctx.rotate(angle);
+                ctx.fillStyle = color;
+                
+                // 绘制箭头
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-headLength, headLength/2);
+                ctx.lineTo(-headLength, -headLength/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            // 初始化地图
+            function initializeMap() {
+                map.grid = Array(map.height).fill().map(() => Array(map.width).fill(0));
+                map.path = [];
+                map.explored = [];
+                map.jumpPoints = []; // 重置跳跃点
+                
+                // 确保起点和终点在地图范围内
+                map.start.x = Math.min(map.start.x, map.width - 1);
+                map.start.y = Math.min(map.start.y, map.height - 1);
+                map.goal.x = Math.min(map.goal.x, map.width - 1);
+                map.goal.y = Math.min(map.goal.y, map.height - 1);
+                
+                // 确保起点和终点不重叠
+                if (map.start.x === map.goal.x && map.start.y === map.goal.y) {
+                    map.goal.x = Math.max(0, map.start.x - 5);
+                    map.goal.y = Math.max(0, map.start.y - 5);
+                }
+                
+                // 确保起点和终点不是障碍物
+                map.grid[map.start.y][map.start.x] = 0;
+                map.grid[map.goal.y][map.goal.x] = 0;
+                
+                resizeCanvas();
+                drawMap();
+            }
+            
+            // 调整Canvas大小
+            function resizeCanvas() {
+                const containerWidth = mapContainer.clientWidth;
+                const containerHeight = mapContainer.clientHeight;
+                
+                // 计算可以容纳的最大单元格大小
+                const cellSizeX = Math.floor(containerWidth / map.width);
+                const cellSizeY = Math.floor(containerHeight / map.height);
+                config.cellSize = Math.min(cellSizeX, cellSizeY);
+                
+                // 设置Canvas尺寸（考虑到Retina屏幕）
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = map.width * config.cellSize * dpr;
+                canvas.height = map.height * config.cellSize * dpr;
+                canvas.style.width = `${map.width * config.cellSize}px`;
+                canvas.style.height = `${map.height * config.cellSize}px`;
+                
+                // 调整上下文缩放
+                ctx.scale(dpr, dpr);
+            }
+            
+            // 绘制地图
+            function drawMap() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制网格背景
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(0, 0, map.width * config.cellSize, map.height * config.cellSize);
+                
+                // 绘制已探索的节点
+                map.explored.forEach(({ x, y, step }) => {
+                    ctx.fillStyle = `rgba(59, 130, 246, ${0.1 + 0.8 * (1 - Math.min(1, step / 100))})`;
+                    ctx.fillRect(x * config.cellSize, y * config.cellSize, config.cellSize, config.cellSize);
+                });
+                
+                // 绘制跳跃点（JPS算法专用）
+                map.jumpPoints.forEach(({ x, y }) => {
+                    ctx.fillStyle = config.jumpPointColor;
+                    ctx.fillRect(x * config.cellSize, y * config.cellSize, config.cellSize, config.cellSize);
+                    
+                    // 添加跳跃点标记
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('J', x * config.cellSize + config.cellSize / 2, y * config.cellSize + config.cellSize / 2);
+                });
+                
+                // 绘制障碍物
+                for (let y = 0; y < map.height; y++) {
+                    for (let x = 0; x < map.width; x++) {
+                        if (map.grid[y][x] === 1) {
+                            ctx.fillStyle = config.obstacleColor;
+                            ctx.fillRect(x * config.cellSize, y * config.cellSize, config.cellSize, config.cellSize);
+                            
+                            // 添加障碍物的圆角效果
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                            ctx.beginPath();
+                            ctx.arc(x * config.cellSize + config.cellSize, y * config.cellSize, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+                
+                // 绘制路径（使用连续折线）
+                if (map.path.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(
+                        map.path[0].x * config.cellSize + config.cellSize / 2,
+                        map.path[0].y * config.cellSize + config.cellSize / 2
+                    );
+                    
+                    for (let i = 1; i < map.path.length; i++) {
+                        ctx.lineTo(
+                            map.path[i].x * config.cellSize + config.cellSize / 2,
+                            map.path[i].y * config.cellSize + config.cellSize / 2
+                        );
+                    }
+                    
+                    ctx.strokeStyle = config.pathColor;
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.stroke();
+                    
+                    // 在路径上绘制箭头
+                    for (let i = 0; i < map.path.length - 1; i++) {
+                        if (i % 3 === 0) { // 每隔几个点绘制一个箭头
+                            const fromX = map.path[i].x * config.cellSize + config.cellSize / 2;
+                            const fromY = map.path[i].y * config.cellSize + config.cellSize / 2;
+                            const toX = map.path[i+1].x * config.cellSize + config.cellSize / 2;
+                            const toY = map.path[i+1].y * config.cellSize + config.cellSize / 2;
+                            
+                            drawArrow(ctx, fromX, fromY, toX, toY, config.pathColor);
+                        }
+                    }
+                }
+                
+                // 绘制起点
+                ctx.fillStyle = config.startColor;
+                ctx.beginPath();
+                ctx.arc(
+                    map.start.x * config.cellSize + config.cellSize / 2,
+                    map.start.y * config.cellSize + config.cellSize / 2,
+                    config.cellSize * 0.4,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                
+                // 绘制终点
+                ctx.fillStyle = config.goalColor;
+                ctx.beginPath();
+                ctx.arc(
+                    map.goal.x * config.cellSize + config.cellSize / 2,
+                    map.goal.y * config.cellSize + config.cellSize / 2,
+                    config.cellSize * 0.4,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                
+                // 绘制网格线
+                ctx.strokeStyle = config.gridLineColor;
+                ctx.lineWidth = 0.5;
+                
+                // 垂直线
+                for (let x = 0; x <= map.width; x++) {
+                    ctx.beginPath();
+                    ctx.moveTo(x * config.cellSize, 0);
+                    ctx.lineTo(x * config.cellSize, map.height * config.cellSize);
+                    ctx.stroke();
+                }
+                
+                // 水平线
+                for (let y = 0; y <= map.height; y++) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y * config.cellSize);
+                    ctx.lineTo(map.width * config.cellSize, y * config.cellSize);
+                    ctx.stroke();
+                }
+            }
+            
+            // 生成随机障碍物
+            function generateObstacles(density) {
+                map.grid = Array(map.height).fill().map(() => Array(map.width).fill(0));
+                
+                // 确保起点和终点不是障碍物
+                map.grid[map.start.y][map.start.x] = 0;
+                map.grid[map.goal.y][map.goal.x] = 0;
+                
+                // 随机生成障碍物
+                const obstacleCount = Math.floor(map.width * map.height * density / 100);
+                let count = 0;
+                
+                while (count < obstacleCount) {
+                    const x = Math.floor(Math.random() * map.width);
+                    const y = Math.floor(Math.random() * map.height);
+                    
+                    // 确保不覆盖起点和终点
+                    if (map.grid[y][x] === 0 && (x !== map.start.x || y !== map.start.y) && (x !== map.goal.x || y !== map.goal.y)) {
+                        map.grid[y][x] = 1;
+                        count++;
+                    }
+                }
+                
+                // 生成一些连续的障碍物，使地图更自然
+                generateContinuousObstacles(Math.floor(obstacleCount * 0.3));
+                
+                drawMap();
+            }
+            
+            // 生成连续的障碍物
+            function generateContinuousObstacles(count) {
+                for (let i = 0; i < count; i++) {
+                    const x = Math.floor(Math.random() * map.width);
+                    const y = Math.floor(Math.random() * map.height);
+                    
+                    // 确保不覆盖起点和终点
+                    if ((x !== map.start.x || y !== map.start.y) && (x !== map.goal.x || y !== map.goal.y)) {
+                        // 随机决定障碍物的大小
+                        const size = 2 + Math.floor(Math.random() * 5);
+                        
+                        // 生成矩形障碍物
+                        for (let dy = 0; dy < size; dy++) {
+                            for (let dx = 0; dx < size; dx++) {
+                                const nx = x + dx;
+                                const ny = y + dy;
+                                
+                                if (nx < map.width && ny < map.height && 
+                                    (nx !== map.start.x || ny !== map.start.y) && 
+                                    (nx !== map.goal.x || ny !== map.goal.y)) {
+                                    map.grid[ny][nx] = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 清空地图
+            function clearMap() {
+                map.grid = Array(map.height).fill().map(() => Array(map.width).fill(0));
+                map.path = [];
+                map.explored = [];
+                map.jumpPoints = [];
+                drawMap();
+            }
+            
+            // 重置地图（保留障碍物）
+            function resetMap() {
+                map.path = [];
+                map.explored = [];
+                map.jumpPoints = [];
+                updateAlgorithmStats();
+                drawMap();
+            }
+            
+            // 更新算法统计信息
+            function updateAlgorithmStats() {
+                pathLengthElement.textContent = map.path.length > 0 ? map.path.length : '-';
+                nodesExploredElement.textContent = map.explored.length > 0 ? map.explored.length : '-';
+                computationTimeElement.textContent = algorithmStats.computationTime > 0 ? 
+                    `${algorithmStats.computationTime}ms` : '-';
+            }
+            
+            // 坐标转换：从像素坐标到网格坐标
+            function pixelToGrid(x, y) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                const canvasX = (x - rect.left) * scaleX;
+                const canvasY = (y - rect.top) * scaleY;
+                
+                return {
+                    x: Math.floor(canvasX / (config.cellSize * window.devicePixelRatio)),
+                    y: Math.floor(canvasY / (config.cellSize * window.devicePixelRatio))
+                };
+            }
+            
+            // 处理鼠标点击
+            function handleCanvasClick(event) {
+                const { x, y } = pixelToGrid(event.clientX, event.clientY);
+                
+                // 确保坐标在地图范围内
+                if (x >= 0 && x < map.width && y >= 0 && y < map.height) {
+                    if (config.currentMode === 'draw') {
+                        // 绘制障碍物
+                        if (x !== map.start.x || y !== map.start.y) { // 不能覆盖起点
+                            if (x !== map.goal.x || y !== map.goal.y) { // 不能覆盖终点
+                                map.grid[y][x] = 1;
+                                drawMap();
+                            }
+                        }
+                    } else if (config.currentMode === 'erase') {
+                        // 擦除障碍物
+                        map.grid[y][x] = 0;
+                        drawMap();
+                    } else if (config.currentMode === 'start') {
+                        // 设置起点
+                        if (x !== map.goal.x || y !== map.goal.y) { // 不能与终点重叠
+                            map.start.x = x;
+                            map.start.y = y;
+                            drawMap();
+                        }
+                    } else if (config.currentMode === 'goal') {
+                        // 设置终点
+                        if (x !== map.start.x || y !== map.start.y) { // 不能与起点重叠
+                            map.goal.x = x;
+                            map.goal.y = y;
+                            drawMap();
+                        }
+                    }
+                }
+            }
+            
+            // 处理鼠标移动（用于连续绘制/擦除）
+            function handleCanvasMove(event) {
+                if (event.buttons !== 1) return; // 只在鼠标按下时处理
+                
+                const { x, y } = pixelToGrid(event.clientX, event.clientY);
+                
+                // 确保坐标在地图范围内
+                if (x >= 0 && x < map.width && y >= 0 && y < map.height) {
+                    if (config.currentMode === 'draw') {
+                        // 绘制障碍物
+                        if (x !== map.start.x || y !== map.start.y) { // 不能覆盖起点
+                            if (x !== map.goal.x || y !== map.goal.y) { // 不能覆盖终点
+                                map.grid[y][x] = 1;
+                                drawMap();
+                            }
+                        }
+                    } else if (config.currentMode === 'erase') {
+                        // 擦除障碍物
+                        map.grid[y][x] = 0;
+                        drawMap();
+                    }
+                }
+            }
+            
+            // 设置当前模式
+            function setMode(mode) {
+                config.currentMode = mode;
+                
+                // 更新按钮状态
+                setStartBtn.classList.toggle('bg-secondary', mode === 'start');
+                setStartBtn.classList.toggle('bg-secondary/70', mode !== 'start');
+                setGoalBtn.classList.toggle('bg-accent', mode === 'goal');
+                setGoalBtn.classList.toggle('bg-accent/70', mode !== 'goal');
+                drawObstacleBtn.classList.toggle('bg-gray-300', mode === 'draw');
+                drawObstacleBtn.classList.toggle('bg-gray-200', mode !== 'draw');
+                eraseObstacleBtn.classList.toggle('bg-gray-300', mode === 'erase');
+                eraseObstacleBtn.classList.toggle('bg-gray-200', mode !== 'erase');
+            }
+            
+            // 计算启发函数值
+            function heuristic(a, b) {
+                if (config.heuristic === 'manhattan') {
+                    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+                } else if (config.heuristic === 'euclidean') {
+                    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+                } else if (config.heuristic === 'chebyshev') {
+                    return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+                }
+                return 0;
+            }
+            
+            // 获取相邻节点
+            function getNeighbors(node) {
+                const neighbors = [];
+                const { x, y } = node;
+                
+                // 定义相邻节点的偏移量（上下左右）
+                const directions = [
+                    { dx: -1, dy: 0 },
+                    { dx: 1, dy: 0 },
+                    { dx: 0, dy: -1 },
+                    { dx: 0, dy: 1 }
+                ];
+                
+                // 如果允许对角线移动，添加对角线方向
+                if (config.allowDiagonal) {
+                    directions.push(
+                        { dx: -1, dy: -1 },
+                        { dx: -1, dy: 1 },
+                        { dx: 1, dy: -1 },
+                        { dx: 1, dy: 1 }
+                    );
+                }
+                
+                // 检查所有可能的相邻节点
+                for (const { dx, dy } of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    
+                    // 确保在地图范围内
+                    if (nx >= 0 && nx < map.width && ny >= 0 && ny < map.height) {
+                        // 跳过障碍物
+                        if (map.grid[ny][nx] === 1) continue;
+                        
+                        // 如果是对角线移动，检查两个相邻的非对角线节点是否为障碍物
+                        if (dx !== 0 && dy !== 0 && config.allowDiagonal) {
+                            if (map.grid[y][nx] === 1 || map.grid[ny][x] === 1) continue;
+                        }
+                        
+                        neighbors.push({ x: nx, y: ny });
+                    }
+                }
+                
+                return neighbors;
+            }
+            
+            // A*算法
+            async function aStar() {
+                const startTime = performance.now();
+                
+                const startNode = { ...map.start, g: 0, h: heuristic(map.start, map.goal), f: 0, parent: null };
+                const openSet = [startNode];
+                const closedSet = new Set();
+                let foundPath = false;
+                
+                map.explored = [];
+                map.path = [];
+                drawMap();
+                
+                while (openSet.length > 0) {
+                    // 找到f值最小的节点
+                    let currentIndex = 0;
+                    for (let i = 0; i < openSet.length; i++) {
+                        if (openSet[i].f < openSet[currentIndex].f) {
+                            currentIndex = i;
+                        }
+                    }
+                    
+                    const current = openSet[currentIndex];
+                    
+                    // 如果到达目标点，构建路径
+                    if (current.x === map.goal.x && current.y === map.goal.y) {
+                        foundPath = true;
+                        buildPath(current);
+                        break;
+                    }
+                    
+                    // 从openSet中移除当前节点，加入closedSet
+                    openSet.splice(currentIndex, 1);
+                    closedSet.add(`${current.x},${current.y}`);
+                    
+                    // 添加到已探索列表（用于可视化）
+                    map.explored.push({ x: current.x, y: current.y, step: map.explored.length });
+                    
+                    // 渲染当前状态
+                    if (map.explored.length % 10 === 0) {
+                        drawMap();
+                        await sleep(100 - config.animationSpeed);
+                    }
+                    
+                    // 获取相邻节点
+                    const neighbors = getNeighbors(current);
+                    
+                    for (const neighbor of neighbors) {
+                        const neighborKey = `${neighbor.x},${neighbor.y}`;
+                        
+                        // 如果已经在closedSet中，跳过
+                        if (closedSet.has(neighborKey)) continue;
+                        
+                        // 计算临时g值
+                        const tentativeG = current.g + 1;
+                        
+                        // 检查是否已经在openSet中
+                        let inOpenSet = false;
+                        let openSetIndex = -1;
+                        
+                        for (let i = 0; i < openSet.length; i++) {
+                            if (openSet[i].x === neighbor.x && openSet[i].y === neighbor.y) {
+                                inOpenSet = true;
+                                openSetIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (!inOpenSet) {
+                            // 不在openSet中，添加
+                            const newNode = {
+                                ...neighbor,
+                                g: tentativeG,
+                                h: heuristic(neighbor, map.goal),
+                                f: tentativeG + heuristic(neighbor, map.goal),
+                                parent: current
+                            };
+                            openSet.push(newNode);
+                        } else {
+                            // 已经在openSet中，检查是否通过当前节点到达更好
+                            if (tentativeG < openSet[openSetIndex].g) {
+                                openSet[openSetIndex].g = tentativeG;
+                                openSet[openSetIndex].f = tentativeG + openSet[openSetIndex].h;
+                                openSet[openSetIndex].parent = current;
+                            }
+                        }
+                    }
+                }
+                
+                const endTime = performance.now();
+                algorithmStats.computationTime = Math.round(endTime - startTime);
+                algorithmStats.nodesExplored = map.explored.length;
+                algorithmStats.pathLength = map.path.length;
+                
+                updateAlgorithmStats();
+                
+                // 最终渲染
+                drawMap();
+                
+                return foundPath;
+            }
+            
+            // Dijkstra算法
+            async function dijkstra() {
+                const startTime = performance.now();
+                
+                const startNode = { ...map.start, cost: 0, parent: null };
+                const priorityQueue = [startNode];
+                const visited = new Set();
+                let foundPath = false;
+                
+                map.explored = [];
+                map.path = [];
+                drawMap();
+                
+                while (priorityQueue.length > 0) {
+                    // 找到cost最小的节点
+                    let currentIndex = 0;
+                    for (let i = 0; i < priorityQueue.length; i++) {
+                        if (priorityQueue[i].cost < priorityQueue[currentIndex].cost) {
+                            currentIndex = i;
+                        }
+                    }
+                    
+                    const current = priorityQueue[currentIndex];
+                    
+                    // 如果到达目标点，构建路径
+                    if (current.x === map.goal.x && current.y === map.goal.y) {
+                        foundPath = true;
+                        buildPath(current);
+                        break;
+                    }
+                    
+                    // 从队列中移除当前节点
+                    priorityQueue.splice(currentIndex, 1);
+                    visited.add(`${current.x},${current.y}`);
+                    
+                    // 添加到已探索列表（用于可视化）
+                    map.explored.push({ x: current.x, y: current.y, step: map.explored.length });
+                    
+                    // 渲染当前状态
+                    if (map.explored.length % 10 === 0) {
+                        drawMap();
+                        await sleep(100 - config.animationSpeed);
+                    }
+                    
+                    // 获取相邻节点
+                    const neighbors = getNeighbors(current);
+                    
+                    for (const neighbor of neighbors) {
+                        const neighborKey = `${neighbor.x},${neighbor.y}`;
+                        
+                        // 如果已经访问过，跳过
+                        if (visited.has(neighborKey)) continue;
+                        
+                        // 计算新的cost
+                        const newCost = current.cost + 1;
+                        
+                        // 检查是否已经在队列中
+                        let inQueue = false;
+                        let queueIndex = -1;
+                        
+                        for (let i = 0; i < priorityQueue.length; i++) {
+                            if (priorityQueue[i].x === neighbor.x && priorityQueue[i].y === neighbor.y) {
+                                inQueue = true;
+                                queueIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (!inQueue) {
+                            // 不在队列中，添加
+                            const newNode = {
+                                ...neighbor,
+                                cost: newCost,
+                                parent: current
+                            };
+                            priorityQueue.push(newNode);
+                        } else {
+                            // 已经在队列中，检查是否通过当前节点到达更好
+                            if (newCost < priorityQueue[queueIndex].cost) {
+                                priorityQueue[queueIndex].cost = newCost;
+                                priorityQueue[queueIndex].parent = current;
+                            }
+                        }
+                    }
+                }
+                
+                const endTime = performance.now();
+                algorithmStats.computationTime = Math.round(endTime - startTime);
+                algorithmStats.nodesExplored = map.explored.length;
+                algorithmStats.pathLength = map.path.length;
+                
+                updateAlgorithmStats();
+                
+                // 最终渲染
+                drawMap();
+                
+                return foundPath;
+            }
+            
+            // DFS算法
+            async function dfs() {
+                const startTime = performance.now();
+                
+                const startNode = { ...map.start, parent: null };
+                const stack = [startNode];
+                const visited = new Set();
+                let foundPath = false;
+                
+                map.explored = [];
+                map.path = [];
+                drawMap();
+                
+                while (stack.length > 0) {
+                    const current = stack.pop();
+                    
+                    // 如果已经访问过，跳过
+                    if (visited.has(`${current.x},${current.y}`)) continue;
+                    
+                    visited.add(`${current.x},${current.y}`);
+                    
+                    // 添加到已探索列表（用于可视化）
+                    map.explored.push({ x: current.x, y: current.y, step: map.explored.length });
+                    
+                    // 渲染当前状态
+                    if (map.explored.length % 10 === 0) {
+                        drawMap();
+                        await sleep(100 - config.animationSpeed);
+                    }
+                    
+                    // 如果到达目标点，构建路径
+                    if (current.x === map.goal.x && current.y === map.goal.y) {
+                        foundPath = true;
+                        buildPath(current);
+                        break;
+                    }
+                    
+                    // 获取相邻节点（逆序添加以保持搜索顺序）
+                    const neighbors = getNeighbors(current).reverse();
+                    
+                    for (const neighbor of neighbors) {
+                        const neighborKey = `${neighbor.x},${neighbor.y}`;
+                        
+                        // 如果已经访问过，跳过
+                        if (visited.has(neighborKey)) continue;
+                        
+                        // 添加到栈中
+                        const newNode = {
+                            ...neighbor,
+                            parent: current
+                        };
+                        stack.push(newNode);
+                    }
+                }
+                
+                const endTime = performance.now();
+                algorithmStats.computationTime = Math.round(endTime - startTime);
+                algorithmStats.nodesExplored = map.explored.length;
+                algorithmStats.pathLength = map.path.length;
+                
+                updateAlgorithmStats();
+                
+                // 最终渲染
+                drawMap();
+                
+                return foundPath;
+            }
+            
+            // JPS算法 - 跳跃点搜索
+            async function jps() {
+                const startTime = performance.now();
+                
+                const startNode = { ...map.start, g: 0, h: heuristic(map.start, map.goal), f: 0, parent: null };
+                const openSet = [startNode];
+                const closedSet = new Set();
+                let foundPath = false;
+                
+                map.explored = [];
+                map.jumpPoints = [];
+                map.path = [];
+                drawMap();
+                
+                // 方向向量
+                const directions = [
+                    { dx: -1, dy: 0 }, { dx: 1, dy: 0 }, { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, // 水平/垂直
+                    { dx: -1, dy: -1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: 1, dy: 1 } // 对角线
+                ];
+                
+                // 跳跃函数 - 在给定方向上搜索跳跃点
+                async function jump(x, y, dx, dy) {
+                    let nx = x + dx;
+                    let ny = y + dy;
+                    
+                    // 如果超出边界或遇到障碍物，返回null
+                    if (nx < 0 || nx >= map.width || ny < 0 || ny >= map.height || map.grid[ny][nx] === 1) {
+                        return null;
+                    }
+                    
+                    // 记录探索点
+                    map.explored.push({ x: nx, y: ny, step: map.explored.length });
+                    
+                    // 如果是目标点，返回该点
+                    if (nx === map.goal.x && ny === map.goal.y) {
+                        return { x: nx, y: ny };
+                    }
+                    
+                    // 检查强制邻居（对角线方向需要额外检查）
+                    if (dx !== 0 && dy !== 0) {
+                        // 检查对角线方向是否有强制邻居
+                        if ((map.grid[y][nx] === 1 && map.grid[ny][x] === 0) || 
+                            (map.grid[ny][x] === 1 && map.grid[y][nx] === 0)) {
+                            return { x: nx, y: ny };
+                        }
+                        
+                        // 递归对角线跳跃
+                        const horizontalJump = await jump(nx, ny, dx, 0);
+                        const verticalJump = await jump(nx, ny, 0, dy);
+                        if (horizontalJump || verticalJump) {
+                            return { x: nx, y: ny };
+                        }
+                    } else {
+                        // 检查水平/垂直方向是否有强制邻居
+                        if (dx !== 0) { // 水平方向
+                            if ((map.grid[ny-1]?.[nx] === 1 && map.grid[ny+1]?.[nx] === 0) || 
+                                (map.grid[ny+1]?.[nx] === 1 && map.grid[ny-1]?.[nx] === 0)) {
+                                return { x: nx, y: ny };
+                            }
+                        } else { // 垂直方向
+                            if ((map.grid[ny]?.[nx-1] === 1 && map.grid[ny]?.[nx+1] === 0) || 
+                                (map.grid[ny]?.[nx+1] === 1 && map.grid[ny]?.[nx-1] === 0)) {
+                                return { x: nx, y: ny };
+                            }
+                        }
+                    }
+                    
+                    // 继续沿方向跳跃
+                    return await jump(nx, ny, dx, dy);
+                }
+                
+                while (openSet.length > 0) {
+                    // 找到f值最小的节点
+                    let currentIndex = 0;
+                    for (let i = 0; i < openSet.length; i++) {
+                        if (openSet[i].f < openSet[currentIndex].f) {
+                            currentIndex = i;
+                        }
+                    }
+                    
+                    const current = openSet[currentIndex];
+                    
+                    // 如果到达目标点，构建路径
+                    if (current.x === map.goal.x && current.y === map.goal.y) {
+                        foundPath = true;
+                        buildPath(current);
+                        break;
+                    }
+                    
+                    // 从openSet中移除当前节点，加入closedSet
+                    openSet.splice(currentIndex, 1);
+                    closedSet.add(`${current.x},${current.y}`);
+                    
+                    // 添加为跳跃点
+                    map.jumpPoints.push({ x: current.x, y: current.y });
+                    
+                    // 可视化更新
+                    if (map.jumpPoints.length % 5 === 0) {
+                        drawMap();
+                        await sleep(100 - config.animationSpeed);
+                    }
+                    
+                    // 获取所有可能的方向
+                    const dirs = [];
+                    if (!current.parent) {
+                        // 起点需要所有方向
+                        for (const dir of directions) {
+                            dirs.push(dir);
+                        }
+                    } else {
+                        // 根据父节点确定方向
+                        const dx = current.x - current.parent.x;
+                        const dy = current.y - current.parent.y;
+                        
+                        // 自然邻居
+                        if (dx !== 0 && dy !== 0) {
+                            // 对角线方向
+                            dirs.push({ dx: dx, dy: dy });
+                            dirs.push({ dx: dx, dy: 0 });
+                            dirs.push({ dx: 0, dy: dy });
+                        } else {
+                            // 水平/垂直方向
+                            if (dx === 0) {
+                                // 垂直
+                                dirs.push({ dx: 0, dy: dy });
+                                dirs.push({ dx: 1, dy: dy });
+                                dirs.push({ dx: -1, dy: dy });
+                            } else {
+                                // 水平
+                                dirs.push({ dx: dx, dy: 0 });
+                                dirs.push({ dx: dx, dy: 1 });
+                                dirs.push({ dx: dx, dy: -1 });
+                            }
+                        }
+                    }
+                    
+                    // 搜索每个方向的跳跃点
+                    for (const dir of dirs) {
+                        const jumpPoint = await jump(current.x, current.y, dir.dx, dir.dy);
+                        
+                        if (jumpPoint) {
+                            const { x, y } = jumpPoint;
+                            const neighborKey = `${x},${y}`;
+                            
+                            // 如果已经在closedSet中，跳过
+                            if (closedSet.has(neighborKey)) continue;
+                            
+                            // 计算新的g值（距离）
+                            const dist = Math.max(Math.abs(x - current.x), Math.abs(y - current.y));
+                            const tentativeG = current.g + dist;
+                            
+                            // 检查是否已经在openSet中
+                            let inOpenSet = false;
+                            let openSetIndex = -1;
+                            
+                            for (let i = 0; i < openSet.length; i++) {
+                                if (openSet[i].x === x && openSet[i].y === y) {
+                                    inOpenSet = true;
+                                    openSetIndex = i;
+                                    break;
+                                }
+                            }
+                            
+                            if (!inOpenSet) {
+                                // 不在openSet中，添加
+                                const newNode = {
+                                    x, y,
+                                    g: tentativeG,
+                                    h: heuristic({x, y}, map.goal),
+                                    f: tentativeG + heuristic({x, y}, map.goal),
+                                    parent: current
+                                };
+                                openSet.push(newNode);
+                            } else {
+                                // 已经在openSet中，检查是否通过当前节点到达更好
+                                if (tentativeG < openSet[openSetIndex].g) {
+                                    openSet[openSetIndex].g = tentativeG;
+                                    openSet[openSetIndex].f = tentativeG + openSet[openSetIndex].h;
+                                    openSet[openSetIndex].parent = current;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                const endTime = performance.now();
+                algorithmStats.computationTime = Math.round(endTime - startTime);
+                algorithmStats.nodesExplored = map.explored.length;
+                algorithmStats.pathLength = map.path.length;
+                
+                updateAlgorithmStats();
+                
+                // 最终渲染
+                drawMap();
+                
+                return foundPath;
+            }
+            
+            // 构建路径
+            function buildPath(node) {
+                map.path = [];
+                let current = node;
+                
+                while (current) {
+                    map.path.unshift({ x: current.x, y: current.y });
+                    current = current.parent;
+                }
+            }
+            
+            // 睡眠函数（用于动画）
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            // 运行所选算法
+            async function runSelectedAlgorithm() {
+                resetMap();
+                
+                let foundPath = false;
+                
+                // 禁用按钮
+                runAlgorithmBtn.disabled = true;
+                runAlgorithmBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>运行中...';
+                
+                // 根据选择的算法运行
+                if (config.selectedAlgorithm === 'a-star') {
+                    foundPath = await aStar();
+                } else if (config.selectedAlgorithm === 'dijkstra') {
+                    foundPath = await dijkstra();
+                } else if (config.selectedAlgorithm === 'dfs') {
+                    foundPath = await dfs();
+                } else if (config.selectedAlgorithm === 'jps') {
+                    foundPath = await jps();
+                }
+                
+                // 重新启用按钮
+                runAlgorithmBtn.disabled = false;
+                runAlgorithmBtn.innerHTML = '<i class="fa fa-play mr-2"></i>运行算法';
+                
+                // 显示结果
+                if (foundPath) {
+                    showToast('路径找到！', 'success');
+                } else {
+                    showToast('无法找到路径！', 'error');
+                }
+            }
+            
+            // 显示提示消息
+            function showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out z-50 ${
+                    type === 'success' ? 'bg-green-500 text-white' : 
+                    type === 'error' ? 'bg-red-500 text-white' : 
+                    'bg-blue-500 text-white'
+                }`;
+                toast.textContent = message;
+                
+                document.body.appendChild(toast);
+                
+                // 显示动画
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                    setTimeout(() => {
+                        document.body.removeChild(toast);
+                    }, 300);
+                }, 3000);
+            }
+            
+            // 初始化事件监听器
+            function initializeEventListeners() {
+                // 地图大小变化
+                mapWidthInput.addEventListener('change', () => {
+                    map.width = parseInt(mapWidthInput.value);
+                    initializeMap();
+                });
+                
+                mapHeightInput.addEventListener('change', () => {
+                    map.height = parseInt(mapHeightInput.value);
+                    initializeMap();
+                });
+                
+                // 障碍物密度变化
+                obstacleDensityInput.addEventListener('input', () => {
+                    densityValue.textContent = `${obstacleDensityInput.value}%`;
+                });
+                
+                obstacleDensityInput.addEventListener('change', () => {
+                    generateObstacles(parseInt(obstacleDensityInput.value));
+                });
+                
+                // 可视化速度变化
+                visualizationSpeedInput.addEventListener('input', () => {
+                    speedValue.textContent = visualizationSpeedInput.value;
+                    config.animationSpeed = parseInt(visualizationSpeedInput.value);
+                });
+                
+                // 启发函数变化
+                heuristicSelect.addEventListener('change', () => {
+                    config.heuristic = heuristicSelect.value;
+                });
+                
+                // 对角线移动变化
+                diagonalRadios.forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        config.allowDiagonal = radio.value === 'true';
+                    });
+                });
+                
+                // 算法选择
+                algoCards.forEach(card => {
+                    card.addEventListener('click', () => {
+                        algoCards.forEach(c => c.classList.remove('algo-card-active'));
+                        card.classList.add('algo-card-active');
+                        config.selectedAlgorithm = card.dataset.algorithm;
+                    });
+                });
+                
+                // 按钮事件
+                runAlgorithmBtn.addEventListener('click', runSelectedAlgorithm);
+                resetMapBtn.addEventListener('click', resetMap);
+                generateMapBtn.addEventListener('click', () => {
+                    generateObstacles(parseInt(obstacleDensityInput.value));
+                });
+                clearMapBtn.addEventListener('click', clearMap);
+                
+                // 模式选择
+                setStartBtn.addEventListener('click', () => setMode('start'));
+                setGoalBtn.addEventListener('click', () => setMode('goal'));
+                drawObstacleBtn.addEventListener('click', () => setMode('draw'));
+                eraseObstacleBtn.addEventListener('click', () => setMode('erase'));
+                
+                // Canvas事件
+                canvas.addEventListener('click', handleCanvasClick);
+                canvas.addEventListener('mousemove', handleCanvasMove);
+                
+                // 窗口大小变化
+                window.addEventListener('resize', () => {
+                    resizeCanvas();
+                    drawMap();
+                });
+            }
+            
+            // 初始化应用
+            function initializeApp() {
+                initializeMap();
+                initializeEventListeners();
+                updateAlgorithmStats();
+                setMode('view');
+                
+                // 初始生成障碍物
+                generateObstacles(parseInt(obstacleDensityInput.value));
+            }
+            
+            // 启动应用
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
