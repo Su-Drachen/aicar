@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能小车助教智能体</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+  <!-- 配置 Tailwind 自定义颜色和字体 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36D399',
+            neutral: '#1F2937',
+            'neutral-light': '#F3F4F6',
+            'neutral-dark': '#111827',
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .bg-gradient-blue {
+        background: linear-gradient(135deg, #165DFF 0%, #0052CC 100%);
+      }
+      .transition-smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .scrollbar-hide {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-gray-50 min-h-screen flex flex-col dark:bg-gray-900 dark:text-white transition-smooth">
+  <!-- 导航栏 -->
+  <header class="bg-white shadow-md sticky top-0 z-50 dark:bg-gray-800 transition-smooth">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-car text-primary text-2xl"></i>
+        <h1 class="text-xl md:text-2xl font-bold text-neutral dark:text-white">智能小车 <span class="text-primary">助教智能体</span></h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-smooth" aria-label="切换主题">
+          <i class="fa fa-moon-o text-neutral dark:text-white"></i>
+        </button>
+        <button id="helpButton" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-smooth" aria-label="帮助">
+          <i class="fa fa-question-circle text-neutral dark:text-white"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow container mx-auto px-4 py-6 flex flex-col">
+    <!-- 聊天区域 -->
+    <div id="chatContainer" class="flex-grow bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 overflow-hidden flex flex-col dark:bg-gray-800 transition-smooth">
+      <div id="responseArea" class="flex-grow overflow-y-auto pb-4 space-y-4 scrollbar-hide">
+        <div class="flex items-start space-x-3 animate-fade-in">
+          <div class="bg-primary/10 p-2 rounded-full">
+            <i class="fa fa-car text-primary"></i>
+          </div>
+          <div class="bg-neutral-light dark:bg-gray-700 rounded-lg p-4 shadow-sm dark:shadow-gray-700 transition-smooth">
+            <p class="text-neutral dark:text-white">你好！我是智能小车助教智能体，有什么可以帮助你的吗？</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 加载指示器 -->
+      <div id="loadingIndicator" class="hidden flex items-center space-x-2 py-2">
+        <div class="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
+        <div class="w-2 h-2 rounded-full bg-primary animate-bounce" style="animation-delay: 0.2s"></div>
+        <div class="w-2 h-2 rounded-full bg-primary animate-bounce" style="animation-delay: 0.4s"></div>
+        <span class="text-sm text-gray-500 dark:text-gray-400">正在思考...</span>
+      </div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 relative dark:bg-gray-800 transition-smooth">
+      <div class="flex space-x-3">
+        <div class="hidden md:flex w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center transition-smooth">
+          <i class="fa fa-user text-gray-500 dark:text-gray-400"></i>
+        </div>
+        <div class="flex-grow">
+          <textarea id="userInput" rows="3" placeholder="输入你的问题..."
+            class="w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-smooth bg-white dark:bg-gray-700 text-neutral dark:text-white placeholder-gray-400 dark:placeholder-gray-500"></textarea>
+          <div class="flex justify-between items-center mt-2">
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              按 <kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Shift+Enter</kbd> 换行，<kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Enter</kbd> 发送
+            </div>
+            <div class="flex space-x-2">
+              <button id="clearButton" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white rounded-lg transition-smooth">
+                <i class="fa fa-trash-o mr-1"></i> 清空
+              </button>
+              <button id="sendButton" onclick="sendUserMessage()"
+                class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg shadow-md hover:shadow-lg transition-smooth">
+                <i class="fa fa-paper-plane-o mr-1"></i> 发送
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-white border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700 py-4 transition-smooth">
+    <div class="container mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p>© 2025 智能小车助教智能体 | 由 ChatGLM 提供技术支持</p>
+    </div>
+  </footer>
+
+  <!-- 帮助模态框 -->
+  <div id="helpModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto dark:bg-gray-800 transition-smooth">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-neutral dark:text-white">使用帮助</h2>
+          <button id="closeHelpModal" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-white transition-smooth" aria-label="关闭帮助">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        <div class="space-y-4 text-gray-700 dark:text-gray-300">
+          <div>
+            <h3 class="font-semibold text-neutral dark:text-white">如何使用？</h3>
+            <p>在输入框中输入你的问题，然后点击"发送"按钮或按 Enter 键发送。</p>
+          </div>
+          <div>
+            <h3 class="font-semibold text-neutral dark:text-white">支持哪些功能？</h3>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>智能小车编程指导</li>
+              <li>传感器应用教程</li>
+              <li>运动控制算法</li>
+              <li>机器人视觉开发</li>
+              <li>更多功能持续开发中...</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="font-semibold text-neutral dark:text-white">快捷键</h3>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Shift+Enter</kbd>：换行</li>
+              <li><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Enter</kbd>：发送消息</li>
+              <li><kbd class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300">Esc</kbd>：关闭帮助对话框</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 模拟数据，实际使用时替换为真实API
+    const api_key = 'abf06d05170b0e58';
+    const api_secret = 'eb4b62752f9d4c12f3f22c9b182d34fa';
+    const assistant_id = "684d3c7b8a1059875ad90afe";
+
+    // DOM元素
+    const userInput = document.getElementById('userInput');
+    const responseArea = document.getElementById('responseArea');
+    const sendButton = document.getElementById('sendButton');
+    const clearButton = document.getElementById('clearButton');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const helpButton = document.getElementById('helpButton');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelpModal = document.getElementById('closeHelpModal');
+    const themeToggle = document.getElementById('themeToggle');
+    const chatContainer = document.getElementById('chatContainer');
+    const body = document.body;
+
+    // 主题切换优化
+    let isDarkMode = localStorage.getItem('darkMode') === 'true';
+    applyTheme(isDarkMode);
+
+    themeToggle.addEventListener('click', () => {
+      isDarkMode = !isDarkMode;
+      applyTheme(isDarkMode);
+      localStorage.setItem('darkMode', isDarkMode);
+    });
+
+    function applyTheme(darkMode) {
+      body.classList.toggle('bg-gray-900', darkMode);
+      body.classList.toggle('bg-gray-50', !darkMode);
+      body.classList.toggle('text-white', darkMode);
+
+      // 更新所有相关元素
+      const bgElements = document.querySelectorAll('.bg-white, .bg-gray-800, .bg-gray-100');
+      bgElements.forEach(el => {
+        el.classList.toggle('bg-gray-800', darkMode);
+        el.classList.toggle('bg-white', !darkMode);
+        el.classList.toggle('bg-gray-700', darkMode);
+        el.classList.toggle('bg-gray-100', !darkMode);
+      });
+
+      const textElements = document.querySelectorAll('.text-neutral, .text-white, .text-gray-500, .text-gray-400, .text-gray-600, .text-gray-700, .text-gray-300, .text-gray-800');
+      textElements.forEach(el => {
+        el.classList.toggle('text-white', darkMode);
+        el.classList.toggle('text-neutral', !darkMode);
+        el.classList.toggle('text-gray-400', darkMode);
+        el.classList.toggle('text-gray-500', !darkMode);
+        el.classList.toggle('text-gray-300', darkMode);
+        el.classList.toggle('text-gray-600', !darkMode);
+        el.classList.toggle('text-gray-700', !darkMode);
+        el.classList.toggle('text-gray-800', !darkMode);
+      });
+
+      const shadowElements = document.querySelectorAll('.shadow-md');
+      shadowElements.forEach(el => {
+        el.classList.toggle('shadow-gray-700', darkMode);
+        el.classList.toggle('shadow-md', !darkMode);
+      });
+
+      const icon = themeToggle.querySelector('i');
+      if (darkMode) {
+        icon.classList.remove('fa-moon-o');
+        icon.classList.add('fa-sun-o');
+      } else {
+        icon.classList.remove('fa-sun-o');
+        icon.classList.add('fa-moon-o');
+      }
+    }
+
+    // 帮助模态框事件
+    helpButton.addEventListener('click', () => {
+      helpModal.classList.remove('hidden');
+      helpModal.classList.add('flex');
+      document.body.style.overflow = 'hidden'; // 防止背景滚动
+    });
+
+    closeHelpModal.addEventListener('click', closeHelpModalHandler);
+
+    // 点击模态框外部关闭
+    helpModal.addEventListener('click', (e) => {
+      if (e.target === helpModal) {
+        closeHelpModalHandler();
+      }
+    });
+
+    // ESC键关闭模态框
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !helpModal.classList.contains('hidden')) {
+        closeHelpModalHandler();
+      }
+    });
+
+    function closeHelpModalHandler() {
+      helpModal.classList.add('hidden');
+      helpModal.classList.remove('flex');
+      document.body.style.overflow = ''; // 恢复背景滚动
+    }
+
+    // 清空聊天
+    clearButton.addEventListener('click', () => {
+      responseArea.innerHTML = '';
+      addSystemMessage('聊天记录已清空');
+    });
+
+    // 添加系统消息
+    function addSystemMessage(message) {
+      const msgHtml = `
+        <div class="flex items-center justify-center py-2">
+          <div class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full transition-smooth">
+            ${message}
+          </div>
+        </div>
+      `;
+      responseArea.insertAdjacentHTML('beforeend', msgHtml);
+      scrollToBottom();
+    }
+
+    // 滚动到底部
+    function scrollToBottom() {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // 处理用户输入
+    userInput.addEventListener('keydown', (e) => {
+      // 按Enter发送消息（Shift+Enter换行）
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendUserMessage();
+      }
+    });
+
+    // 自动调整输入框高度
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto';
+      userInput.style.height = (userInput.scrollHeight) + 'px';
+      if (userInput.scrollHeight > 200) {
+        userInput.style.overflowY = 'auto';
+      } else {
+        userInput.style.overflowY = 'hidden';
+      }
+    });
+
+    // 异步获取访问令牌
+    async function get_access_token() {
+      const url = "https://chatglm.cn/chatglm/assistant-api/v1/get_token";
+      const data = {
+        api_key: api_key,
+        api_secret: api_secret
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP错误，状态码: ${response.status}`);
+        }
+
+        const token_info = await response.json();
+        console.log('成功获取访问令牌');
+        return token_info.result.access_token;
+      } catch (error) {
+        console.error('获取访问令牌时出错:', error);
+        let errorMessage = '抱歉，连接服务器时出现错误，请稍后再试。';
+
+        if (error.message.includes('NetworkError')) {
+          errorMessage = '网络连接失败，请检查你的网络设置。';
+        } else if (error.message.includes('401')) {
+          errorMessage = '认证失败，请检查API密钥是否正确。';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器内部错误，请稍后再试。';
+        }
+
+        addAssistantMessage(errorMessage);
+        return null;
+      }
+    }
+
+    // 处理响应数据
+    function handle_response(data_dict) {
+      const message = data_dict.message || {};
+      const content = message.content || {};
+      const response_type = content.type;
+
+      if (response_type) {
+        const handlers = {
+          "text": (c) => c.text || "未提供文本",
+          "image": (c) => c.image ? c.image.map(image => image.image_url).join(', ') : '',
+          "code": (c) => c.code,
+          "execution_output": (c) => c.content,
+          "system_error": (c) => c.content,
+          "tool_calls": (d) => d.tool_calls,
+          "browser_result": (c) => {
+            const parsedContent = JSON.parse(c.content || '{}');
+            return `浏览器结果 - 标题: ${parsedContent.title} URL: ${parsedContent.url}`;
+          }
+        };
+
+        return handlers[response_type]?.(content) || null;
+      }
+
+      return null;
+    }
+
+    // 发送消息并获取响应
+    async function send_message(access_token, prompt) {
+      const url = "https://chatglm.cn/chatglm/assistant-api/v1/stream";
+      const headers = {
+        "Authorization": `Bearer ${access_token}`,
+        "Content-Type": "application/json"
+      };
+      const data = {
+        "assistant_id": assistant_id,
+        "prompt": prompt
+      };
+
+      try {
+        console.log('发送消息到API:', prompt);
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP错误，状态码: ${response.status}`);
+        }
+
+        let complete_output = "";
+        const reader = response.body.getReader();
+        let last_length = 0;
+
+        console.log('开始接收流式响应');
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const decoded_line = new TextDecoder().decode(value);
+          const lines = decoded_line.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data:')) {
+              try {
+                const data_dict = JSON.parse(line.slice(5));
+                const output = handle_response(data_dict);
+
+                if (output) {
+                  const new_text = output.slice(last_length);
+                  complete_output += new_text;
+                  last_length = output.length;
+                }
+              } catch (parseError) {
+                console.error('解析响应数据时出错:', parseError, '数据:', line);
+              }
+            }
+          }
+        }
+
+        console.log('响应接收完成');
+        return complete_output;
+      } catch (error) {
+        console.error('发送消息时出错:', error);
+        let errorMessage = '抱歉，处理你的请求时出现错误，请重试。';
+
+        if (error.message.includes('NetworkError')) {
+          errorMessage = '网络连接失败，请检查你的网络设置。';
+        } else if (error.message.includes('401')) {
+          errorMessage = '认证失败，请检查API密钥是否正确。';
+        } else if (error.message.includes('404')) {
+          errorMessage = 'API端点未找到，请检查URL是否正确。';
+        } else if (error.message.includes('500')) {
+          errorMessage = '服务器内部错误，请稍后再试。';
+        }
+
+        addAssistantMessage(errorMessage);
+        return null;
+      }
+    }
+
+    // 发送用户消息
+    async function sendUserMessage() {
+      const message = userInput.value.trim();
+      if (message === '') return;
+
+      // 显示用户消息
+      addUserMessage(message);
+      userInput.value = '';
+      userInput.style.height = 'auto'; // 重置输入框高度
+
+      // 显示加载状态
+      loadingIndicator.classList.remove('hidden');
+      scrollToBottom();
+
+      // 发送消息并获取响应
+      const access_token = await get_access_token();
+      if (!access_token) {
+        loadingIndicator.classList.add('hidden');
+        return;
+      }
+
+      const response = await send_message(access_token, message);
+
+      // 隐藏加载状态
+      loadingIndicator.classList.add('hidden');
+
+      // 显示响应
+      if (response) {
+        addAssistantMessage(response);
+      } else {
+        addAssistantMessage('抱歉，处理你的请求时出现错误，请重试。');
+      }
+    }
+
+    // 添加用户消息到聊天区域
+    function addUserMessage(message) {
+      const msgHtml = `
+        <div class="flex items-start space-x-3 justify-end animate-fade-in">
+          <div class="bg-neutral-light dark:bg-gray-700 rounded-lg p-4 shadow-sm dark:shadow-gray-700 text-right transition-smooth">
+            <p class="text-neutral dark:text-white">${escapeHtml(message)}</p>
+          </div>
+          <div class="hidden md:flex w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center transition-smooth">
+            <i class="fa fa-user text-gray-500 dark:text-gray-400"></i>
+          </div>
+        </div>
+      `;
+      responseArea.insertAdjacentHTML('beforeend', msgHtml);
+      scrollToBottom();
+    }
+
+    // 添加助手消息到聊天区域
+    function addAssistantMessage(message) {
+      const msgHtml = `
+        <div class="flex items-start space-x-3 animate-fade-in">
+          <div class="bg-primary/10 p-2 rounded-full">
+            <i class="fa fa-car text-primary"></i>
+          </div>
+          <div class="bg-neutral-light dark:bg-gray-700 rounded-lg p-4 shadow-sm dark:shadow-gray-700 transition-smooth">
+            <p class="text-neutral dark:text-white">${formatResponse(message)}</p>
+          </div>
+        </div>
+      `;
+      responseArea.insertAdjacentHTML('beforeend', msgHtml);
+      scrollToBottom();
+    }
+
+    // 格式化响应内容
+    function formatResponse(message) {
+      // 简单的HTML转义
+      let formatted = escapeHtml(message);
+
+      // 检测代码块并格式化
+      formatted = formatted.replace(/```([\s\S]*?)```/g, (match, code) => {
+        return `<pre class="bg-gray-800 text-white p-3 rounded my-2 overflow-x-auto"><code>${escapeHtml(code)}</code></pre>`;
+      });
+
+      // 检测链接并转换为可点击的链接
+      formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-primary hover:underline">$1</a>');
+
+      return formatted;
+    }
+
+    // HTML转义函数
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // 添加动画效果
+    document.head.insertAdjacentHTML('beforeend', `
+      <style>
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+      </style>
+    `);
+
+    // 初始化
+    addSystemMessage('欢迎使用智能小车助教智能体');
+    userInput.focus(); // 自动聚焦到输入框
+  </script>
+</body>
+</html>
